@@ -4,11 +4,8 @@ from config import *
 from .utils import read_partial_data_from_file
 
 
-# This class is meant to deal with IO for judges
-# No further explanations...
-class Judge(Program):
-    def __init__(self, submission, config, round_id):
-        super().__init__(submission, config, round_id)
+class Judge:
+    def __init__(self, indicator, settings):
 
         self.input_path = self.output_path
         self.output_path = os.path.join(self.round_dir, 'judge_result')

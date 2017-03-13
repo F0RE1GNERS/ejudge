@@ -2,7 +2,7 @@ import _judger
 import uuid
 from config import *
 from .languages import LANGUAGE_SETTINGS
-from .utils import get_language
+from .utils import get_language, read_partial_data_from_file
 
 
 # For celery usage
@@ -18,86 +18,57 @@ def _celery_judger_run(args):
 
 class Program(object):
 
-    def __init__(self, submission, config, round_id):
+    def __init__(self, code, lang, settings):
 
         # About this program
-        self.submission_id = submission.get('id', 0)
-        self.lang = submission.get('lang', 'cpp')
-        self.code = submission.get('code', '')
-        if self.lang == 'builtin':  # built-in program
-            self.lang = 'python'
-            try:
-                code_path = os.path.normpath(os.path.join(INCLUDE_DIR, self.code))
-                self.lang = get_language(code_path)
-                if not code_path.startswith(INCLUDE_DIR):
-                    raise OSError
-                self.code = open(code_path, 'r').read()
-            except OSError:
-                self.code = ''
+        self.code = code
+        self.lang = lang
+        self.settings = settings
 
         self.language_settings = LANGUAGE_SETTINGS[self.lang]
-        self.score = 0
-        self.sum_score = 0
-
-        # Restrictive settings
-        self.round_id = round_id
-        self.problem_id = config.get('problem_id')
-        self.max_time = config.get('max_time', 1000)
-        self.max_memory = config.get('max_memory', 256)
-        self.max_sum_time = config.get('max_sum_time', 10000)
-
-        self.sum_time = 0
-        # if you call it max, it is ok.
-        self.sum_memory = 0
-
-        # Deal with directories
-        self.submission_dir = os.path.join(SUBMISSION_DIR, str(self.submission_id))
-        self.round_dir = os.path.join(ROUND_DIR, str(self.round_id))
-        if not os.path.exists(self.round_dir):
-            os.mkdir(self.round_dir)
-        if not os.path.exists(self.submission_dir):
-            os.mkdir(self.submission_dir)
-        os.chown(self.round_dir, COMPILER_USER_UID, COMPILER_GROUP_GID)
-        os.chown(self.submission_dir, COMPILER_USER_UID, COMPILER_GROUP_GID)
+        self.run_dir = self.settings.round_dir
 
         # Ready to make some files
         self.src_name = self.language_settings['src_name']
         self.exe_name = self.language_settings['exe_name']
-        self.src_path = os.path.join(self.submission_dir, self.src_name)
-        self.exe_path = os.path.join(self.submission_dir, self.exe_name)
+        self.src_path = os.path.join(self.run_dir, self.src_name)
+        self.exe_path = os.path.join(self.run_dir, self.exe_name)
 
         # Compilation related
-        self.compile_out_path = os.path.join(self.submission_dir, 'compile.out')
-        self.compile_log_path = os.path.join(self.submission_dir, 'compile.log')
+        self.compile_out_path = os.path.join(self.run_dir, 'compile.out')
+        self.compile_log_path = os.path.join(self.run_dir, 'compile.log')
         self.compile_cmd = self.language_settings['compile_cmd'].format(
             src_path=self.src_path,
             exe_path=self.exe_path,
         ).split(' ')
 
         # Running related
-        self.input_path = os.path.join(self.round_dir, 'in')
-        self.output_path = os.path.join(self.round_dir, 'out')
-        self.log_path = os.path.join(self.round_dir, 'run.log')
+        self.input_path = os.path.join(self.run_dir, 'in')
+        self.output_path = os.path.join(self.run_dir, 'out')
+        self.log_path = os.path.join(self.run_dir, 'run.log')
         self.seccomp_rule_name = self.language_settings['seccomp_rule']
         self.run_cmd = self.language_settings['exe_cmd'].format(
             exe_path=self.exe_path,
             # The following is for Java
-            exe_dir=self.submission_dir,
+            exe_dir=self.run_dir,
             exe_name=self.exe_name,
-            max_memory=self.max_memory
+            max_memory=self.settings.max_memory
         ).split(' ')
 
     def compile(self):
         with open(self.src_path, 'w') as f:
             f.write(self.code)
         result = self._compile()
+        # TODO: comment this
         print("Compile Result of " + self.lang + ": " + str(result))
+        response = {"code": 0, "message": ""}
         if result["result"] != _judger.RESULT_SUCCESS:
             if not os.path.exists(self.compile_out_path):
-                with open(self.compile_out_path, 'w') as f:
-                    f.write("Error Code = " + result['error'])
-            return False
-        return True
+                response.code = COMPILE_ERROR
+                response.message = read_partial_data_from_file(self.compile_out_path)
+                if response.message == '':
+                    response.message = read_partial_data_from_file(self.compile_log_path)
+        return response
 
     def run(self):
         # Prevent input errors
@@ -109,18 +80,13 @@ class Program(object):
         if self.lang == 'java':
             result['memory'] = 0
 
-        # Sum time
-        self.sum_time += result['cpu_time']
-        self.sum_memory = max(self.sum_memory, result['memory'])
-        if self.sum_time > self.max_sum_time > 0:
-            result['result'] = SUM_TIME_LIMIT_EXCEEDED
-
-        # A fake one
+        # A fake time limit / memory limit exceeded
         if result['result'] == CPU_TIME_LIMIT_EXCEEDED or result['result'] == REAL_TIME_LIMIT_EXCEEDED:
-            result['time'] = self.max_time
+            result['time'] = self.settings.max_time
         if result['result'] == MEMORY_LIMIT_EXCEEDED:
-            result['memory'] = self.max_memory
+            result['memory'] = self.settings.max_memory
 
+        # TODO: comment this
         print("Running Result of " + self.lang + ": " + str(result))
         return result
 
@@ -152,9 +118,9 @@ class Program(object):
 
     def _run_args(self):
         return dict(
-            max_cpu_time=self.max_time,
-            max_real_time=self.max_time * 10,
-            max_memory=self.max_memory * 1048576 if self.lang != 'java' else -1,
+            max_cpu_time=self.settings.max_time,
+            max_real_time=self.settings.max_time * 10,
+            max_memory=self.settings.max_memory * 1024 if self.lang != 'java' else -1,
             max_output_size=128 * 1024 * 1024,
             max_process_number=_judger.UNLIMITED,
             exe_path=self.run_cmd[0],

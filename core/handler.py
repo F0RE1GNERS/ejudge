@@ -1,8 +1,8 @@
 import shutil
-import copy
 from random import Random
 from .program import Program
 from .judge import Judge
+from .settings import RoundSettings
 from .utils import *
 from config import *
 
@@ -13,100 +13,39 @@ class Handler(object):
         # Handling a not complete data?
         # Therefore we are checking them first
         # If any of these failed, the exception will be caught outside.
-
         self.id = data['id']
         self.code = data['code']
         self.lang = data['lang']
-        self.settings = ProblemSettings(data['config'])
-
-        if data.get('judge') is None:
-            data['judge'] = {'id': 0, 'lang': 'builtin', 'code': 'testlib/checker/file_cmp.py'}
-        if data.get('pretest_judge') is None:
-            data['pretest_judge'] = copy.deepcopy(data['judge'])
-
-        submission_list = data.get('submissions')
-        config = data.get('config', dict())
-        judge = data.get('judge')
-        pretest_judge = data.get('pretest_judge', judge)
-        self.round_id = randomize_round_id()
-        self.submissions = []
-
-        # TEST
-        try:
-            self.test_result = Tester({'submission': judge, 'config': config}, do_not_run=True).test()
-            if self.test_result['code'] != PRETEST_PASSED:
-                raise Handler.TestFailedException
-            self.judge = Judge(judge, config, self.round_id)
-
-            self.test_result = Tester({'submission': pretest_judge, 'config': config}, do_not_run=True).test()
-            if self.test_result['code'] != PRETEST_PASSED:
-                raise Handler.TestFailedException
-            self.pretest_judge = Judge(pretest_judge, config, self.round_id)
-
-            for submission in submission_list:
-                self.test_result = Tester({'submission': submission, 'judge': pretest_judge, 'config': config}).test()
-                if self.test_result['code'] != PRETEST_PASSED:
-                    raise Handler.TestFailedException
-                self.submissions.append(Program(submission, config, self.round_id))
-
-        except Handler.TestFailedException:
-            pass
-
-        else:
-            self.problem_id = config['problem_id']
-            self.data_dir = os.path.join(DATA_DIR, str(self.problem_id))
-            self.round_dir = os.path.join(ROUND_DIR, str(self.round_id))
-            self.input_path = os.path.join(self.round_dir, 'in')
-            self.output_path = os.path.join(self.round_dir, 'out')
-            self.ans_path = os.path.join(self.round_dir, 'judge_ans')
-            self.round_log_path = os.path.join(self.round_dir, 'round.log')
-
-            self.round_log = open(self.round_log_path, "w")
-            self.dumped = False
+        self.settings = RoundSettings(data['config'])
+        self.program = Program(self.code, self.lang, self.settings)
+        self.judge = Judge(data['judge'], self.settings)
 
     def run(self):
-        if self.test_result['code'] != PRETEST_PASSED:
-            return self.test_result
 
-        if self.dumped:
-            # WHAT THE HELL?
-            return {'code': SYSTEM_ERROR}
-        self.dumped = True
+        compile_result = self.program.compile()
+        if compile_result['code'] == COMPILE_ERROR:
+            return compile_result
 
-        # IMPORT DATA
-        data_list = import_data(self.data_dir)
+        data_set = import_data(self.settings.data_dir)
+        details = []
+        test_num = 0
+        sum_time = 0
 
-        # INIT
-        for i in range(len(self.submissions)):
-            self.submissions[i].sum_score = 0
+        for key in sorted(data_set.keys()):
+            self.transfer_data(key, data_set[key])
+            test_num += 1
 
-        for data in data_list:
-            input_file = data[0]
-            ans_file = data[1]
-            weight = data[2]
+            running_result = self.program.run()
+            sum_time += running_result['cpu_time']
+            log_info = dict(
+                count=test_num,
+                time=running_result['cpu_time'],
+                memory=running_result['memory'] // 1024,
+                exit_code=running_result['exit_code'],
+                result=running_result['result'],
+            )
+            if sum_time > self.settings.max_sum_time:
 
-            # use copy instead of link to prevent chmod problems
-            if os.path.exists(self.input_path):
-                os.remove(self.input_path)
-            shutil.copyfile(os.path.join(self.data_dir, input_file), self.input_path)
-
-            if os.path.exists(self.ans_path):
-                os.remove(self.ans_path)
-            if ans_file is not None:
-                shutil.copyfile(os.path.join(self.data_dir, ans_file), self.ans_path)
-
-            self.round_log.write('#### Based on input data %s, data weight %d:\n\n' % (input_file, weight))
-
-            # Start Running
-
-            r = Random()
-            r.shuffle(self.submissions)
-            for i in range(len(self.submissions)):
-                self.submissions[i].score = 0
-                self.submissions[i].sum_time = 0
-                self.submissions[i].sum_memory = 0
-            cnt = 0
-            run_count = 1
 
             while True:
                 running_result = self.submissions[cnt].run()
@@ -198,3 +137,11 @@ class Handler(object):
         return json_result
 
 
+    def transfer_data(self, input_file, ans_file):
+        """
+        :param input_file: filename, directory not included
+        :param ans_file: filename
+        :return: copy file to round directory and return nothing
+        """
+        shutil.copyfile(os.path.join(self.settings.data_dir, input_file), self.settings.input_path)
+        shutil.copyfile(os.path.join(self.settings.data_dir, ans_file), self.settings.ans_path)
