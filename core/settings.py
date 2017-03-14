@@ -7,6 +7,10 @@ from config import COMPILER_USER_UID, COMPILER_GROUP_GID
 class RoundSettings:
 
     def __init__(self, data):
+        """
+        :param data: should include:
+        max_time, max_sum_time, max_memory, problem_id
+        """
         self.max_time = data['max_time']
         self.max_sum_time = data['max_sum_time']
         self.max_memory = data['max_memory']

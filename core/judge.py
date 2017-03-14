@@ -18,17 +18,22 @@ class Judge:
         self.input_path = settings.input_path
         self.output_path = settings.output_path
         self.ans_path = settings.ans_path
-        while True:
-            for path in search_path:
-                if indicator in os.listdir(path):
-                    shutil.copyfile(os.path.join(path, indicator), self.running_path)
-                    break
-            if not os.path.exists(self.running_path):
-                try:
-                    shutil.copyfile(os.path.join(TESTLIB_BUILD_DIR, 'fcmp'), self.running_path)
-                except OSError:
-                    print('Judge seems to be not installed?')
-                    raise OSError
+        for path in search_path:
+            if indicator in os.listdir(path):
+                assert os.path.exists(os.path.join(path, indicator))
+                shutil.copyfile(os.path.join(path, indicator), self.running_path)
+                print(os.path.getsize(self.running_path))
+                assert os.path.exists(self.running_path)
+                break
+        if not os.path.exists(self.running_path):
+            try:
+                shutil.copyfile(os.path.join(TESTLIB_BUILD_DIR, 'fcmp'), self.running_path)
+            except OSError:
+                print('Judge seems to be not installed?')
+                raise OSError
+
+        # Don't forget to add permission to judge
+        os.chmod(self.running_path, 0o755)
 
     def run(self):
         """

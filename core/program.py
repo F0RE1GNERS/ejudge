@@ -2,12 +2,12 @@ import _judger
 import uuid
 from config import *
 from .languages import LANGUAGE_SETTINGS
-from .utils import get_language, read_partial_data_from_file
+from .utils import read_partial_data_from_file
 
 
 # For celery usage
 
-@celery.task
+#@celery.task
 def _celery_judger_run(args):
     # args is dict
     return _judger.run(**args)
@@ -58,7 +58,9 @@ class Program(object):
     def compile(self):
         with open(self.src_path, 'w') as f:
             f.write(self.code)
+
         result = self._compile()
+        print('ok')
         # TODO: comment this
         print("Compile Result of " + self.lang + ": " + str(result))
         response = {"code": 0, "message": ""}
@@ -91,10 +93,12 @@ class Program(object):
         return result
 
     def _compile(self):
-        return _celery_judger_run.delay(self._compile_args()).get()
+        return _celery_judger_run(self._compile_args())
+        #return _celery_judger_run.delay(self._compile_args()).get()
 
     def _run(self):
-        return _celery_judger_run.delay(self._run_args()).get()
+        return _celery_judger_run(self._run_args())
+        #return _celery_judger_run.delay(self._run_args()).get()
 
     def _compile_args(self):
         return dict(
@@ -120,7 +124,7 @@ class Program(object):
         return dict(
             max_cpu_time=self.settings.max_time,
             max_real_time=self.settings.max_time * 10,
-            max_memory=self.settings.max_memory * 1024 if self.lang != 'java' else -1,
+            max_memory=self.settings.max_memory * 1048576 if self.lang != 'java' else -1,
             max_output_size=128 * 1024 * 1024,
             max_process_number=_judger.UNLIMITED,
             exe_path=self.run_cmd[0],

@@ -1,3 +1,4 @@
+mkdir build
 g++ -o build/acmp src/acmp.cpp
 g++ -o build/caseicmp src/caseicmp.cpp
 g++ -o build/casencmp src/casencmp.cpp

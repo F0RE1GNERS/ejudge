@@ -10,21 +10,19 @@ def import_data(path):
         return result
     raw_file_list = os.listdir(path)
     file_set = set(raw_file_list)
-    pattern_in = '.in$'
-    pattern_out = ['.out', '.ans']
+    patterns = {'.in$': ['.out', '.ans'], 'input': ['output', 'answer']}
 
     for file in raw_file_list:
-        if re.search(pattern_in, file) is not None:
-            for pattern in pattern_out:
-                try_str = re.sub(pattern_in, pattern, file)
-                if try_str in file_set:
-                    file_set.remove(try_str)
-                    file_set.remove(file)
-                    result[file] = try_str
-                    break
+        for pattern_in, pattern_out in patterns.items():
+            if re.search(pattern_in, file) is not None:
+                for pattern in pattern_out:
+                    try_str = re.sub(pattern_in, pattern, file)
+                    if try_str in file_set:
+                        file_set.remove(try_str)
+                        file_set.remove(file)
+                        result[file] = try_str
+                        break
 
-    # TODO: delete
-    print(result)
     return result
 
 

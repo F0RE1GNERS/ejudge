@@ -10,13 +10,21 @@ from config import *
 class Handler(object):
 
     def __init__(self, data):
+        """
+        :param data: including the following
+        id: the id of the code, used in returned data
+        code: just the code, should not be too long
+        lang: language can now be c, cpp, java, python
+        settings: should be an entire problem setting as demonstrated in RoundSettings
+        judge: an indicator of judge used
+        """
         # Handling a not complete data?
         # Therefore we are checking them first
         # If any of these failed, the exception will be caught outside.
         self.id = data['id']
         self.code = data['code']
         self.lang = data['lang']
-        self.settings = RoundSettings(data['config'])
+        self.settings = RoundSettings(data['settings'])
         self.program = Program(self.code, self.lang, self.settings)
         self.judge = Judge(data['judge'], self.settings)
 
@@ -33,8 +41,8 @@ class Handler(object):
         detail = []
         test_num, sum_time, sum_memory, sum_verdict = 0, 0, 0, ACCEPTED
 
-        for key in sorted(data_set.keys()):
-            self.transfer_data(key, data_set[key])
+        for key, val in sorted(data_set.items()):
+            self.transfer_data(key, val)
             test_num += 1
 
             running_result = self.program.run()
@@ -42,7 +50,7 @@ class Handler(object):
             verdict = running_result['result']
             if verdict == 0:
                 checker_exit_code = self.judge.run()
-                if checker_exit_code == 0:
+                if checker_exit_code != 0:
                     verdict = WRONG_ANSWER
 
             log_info = dict(
@@ -57,8 +65,7 @@ class Handler(object):
             sum_memory = max(sum_memory, log_info['memory'])
 
             if verdict != ACCEPTED:
-                sum_verdict = verdict
-                break
+                sum_verdict = max(verdict, sum_verdict) if verdict > 0 else verdict
             if sum_time > self.settings.max_sum_time:
                 sum_verdict = SUM_TIME_LIMIT_EXCEEDED
                 break
