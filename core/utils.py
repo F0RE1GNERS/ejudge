@@ -26,7 +26,7 @@ def import_data(path):
     return result
 
 
-def read_partial_data_from_file(filename, length=1024):
+def read_partial_data_from_file(filename, length=4096):
     with open(filename, "r") as f:
         result = f.read(length)
     if len(result) >= length - 1:

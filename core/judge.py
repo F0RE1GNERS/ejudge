@@ -22,7 +22,6 @@ class Judge:
             if indicator in os.listdir(path):
                 assert os.path.exists(os.path.join(path, indicator))
                 shutil.copyfile(os.path.join(path, indicator), self.running_path)
-                print(os.path.getsize(self.running_path))
                 assert os.path.exists(self.running_path)
                 break
         if not os.path.exists(self.running_path):
@@ -39,4 +38,5 @@ class Judge:
         """
         :return: checker exit code
         """
-        return subprocess.call([self.running_path, self.input_path, self.output_path, self.ans_path], timeout=10)
+        return subprocess.call([self.running_path, self.input_path, self.output_path, self.ans_path],
+                               stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT, timeout=10)

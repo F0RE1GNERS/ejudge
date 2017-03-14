@@ -12,12 +12,8 @@ TESTLIB_BUILD_DIR = os.path.join(BASE_DIR, 'testlib/build')
 JUDGE_BASE_DIR = '/judge_server'
 JUDGE_BASE_DIR_PAST = '/judge_server_past'
 
-SUBMISSION_DIR = os.path.join(JUDGE_BASE_DIR, 'submission')
-COMPILE_DIR = os.path.join(JUDGE_BASE_DIR, 'compile')
 ROUND_DIR = os.path.join(JUDGE_BASE_DIR, 'round')
 DATA_DIR = os.path.join(JUDGE_BASE_DIR, 'data')
-PRETEST_DIR = os.path.join(JUDGE_BASE_DIR, 'pretest')
-INCLUDE_DIR = os.path.join(JUDGE_BASE_DIR, 'include')
 TMP_DIR = os.path.join(JUDGE_BASE_DIR, 'tmp')
 
 RUN_USER_UID = pwd.getpwnam("nobody").pw_uid
@@ -25,7 +21,6 @@ RUN_GROUP_GID = grp.getgrnam("nogroup").gr_gid
 
 COMPILER_USER_UID = pwd.getpwnam("compiler").pw_uid
 COMPILER_GROUP_GID = grp.getgrnam("compiler").gr_gid
-
 
 # Important! Code meaning!
 # ERROR_CODE < 0: FORGIVEN

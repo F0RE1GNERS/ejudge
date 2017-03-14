@@ -6,6 +6,7 @@ import json
 from requests.auth import HTTPBasicAuth
 import unittest
 import zipfile
+from config import *
 
 sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 
@@ -44,7 +45,35 @@ class WebserverTest(unittest.TestCase):
         data.update({'settings': dict(max_time=1000, max_sum_time=10000, max_memory=256, problem_id=1000),
                      'judge': 'ncmp'})
         res = self.send_judge(data)
-        print(res)
+        self.assertEqual(res['verdict'], ACCEPTED)
+
+    def test_judge_a_plus_b_wa(self):
+        data = self.formatSubmissionJSON(301, 'cpp', 'a_plus_b/a_plus_b_c_wa')
+        data.update({'settings': dict(max_time=1000, max_sum_time=10000, max_memory=256, problem_id=1000),
+                     'judge': 'ncmp'})
+        res = self.send_judge(data)
+        self.assertEqual(res['verdict'], WRONG_ANSWER)
+
+    def test_judge_a_plus_b_ce(self):
+        data = self.formatSubmissionJSON(302, 'cpp', 'a_plus_b/a_plus_b_c_ce')
+        data.update({'settings': dict(max_time=1000, max_sum_time=10000, max_memory=256, problem_id=1000),
+                     'judge': 'ncmp'})
+        res = self.send_judge(data)
+        self.assertEqual(res['verdict'], COMPILE_ERROR)
+
+    def test_judge_a_plus_b_java(self):
+        data = self.formatSubmissionJSON(303, 'java', 'a_plus_b/a_plus_b')
+        data.update({'settings': dict(max_time=1000, max_sum_time=10000, max_memory=256, problem_id=1000),
+                     'judge': 'ncmp'})
+        res = self.send_judge(data)
+        self.assertEqual(res['verdict'], ACCEPTED)
+
+    def test_judge_a_plus_b_py(self):
+        data = self.formatSubmissionJSON(304, 'python', 'a_plus_b/a_plus_b')
+        data.update({'settings': dict(max_time=1000, max_sum_time=10000, max_memory=256, problem_id=1000),
+                     'judge': 'ncmp'})
+        res = self.send_judge(data)
+        self.assertEqual(res['verdict'], ACCEPTED)
 
 
     # A * B Problem Test

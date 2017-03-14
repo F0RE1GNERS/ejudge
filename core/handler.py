@@ -30,7 +30,7 @@ class Handler(object):
 
     def run(self):
 
-        response = {'id': self.id, 'detail': {}}
+        response = {'id': self.id}
         compile_result = self.program.compile()
         if compile_result['code'] == COMPILE_ERROR:
             response['verdict'] = COMPILE_ERROR

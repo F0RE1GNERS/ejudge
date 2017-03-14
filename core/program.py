@@ -7,7 +7,7 @@ from .utils import read_partial_data_from_file
 
 # For celery usage
 
-#@celery.task
+@celery.task
 def _celery_judger_run(args):
     # args is dict
     return _judger.run(**args)
@@ -60,16 +60,14 @@ class Program(object):
             f.write(self.code)
 
         result = self._compile()
-        print('ok')
-        # TODO: comment this
-        print("Compile Result of " + self.lang + ": " + str(result))
+        # print("Compile Result of " + self.lang + ": " + str(result))
         response = {"code": 0, "message": ""}
         if result["result"] != _judger.RESULT_SUCCESS:
-            if not os.path.exists(self.compile_out_path):
-                response.code = COMPILE_ERROR
-                response.message = read_partial_data_from_file(self.compile_out_path)
-                if response.message == '':
-                    response.message = read_partial_data_from_file(self.compile_log_path)
+            response['code'] = COMPILE_ERROR
+            if os.path.exists(self.compile_out_path):
+                response['message'] = read_partial_data_from_file(self.compile_out_path)
+            if response['message'] == '' and os.path.exists(self.compile_log_path):
+                response['message'] = read_partial_data_from_file(self.compile_log_path)
         return response
 
     def run(self):
@@ -88,17 +86,16 @@ class Program(object):
         if result['result'] == MEMORY_LIMIT_EXCEEDED:
             result['memory'] = self.settings.max_memory
 
-        # TODO: comment this
-        print("Running Result of " + self.lang + ": " + str(result))
+        # print("Running Result of " + self.lang + ": " + str(result))
         return result
 
     def _compile(self):
-        return _celery_judger_run(self._compile_args())
-        #return _celery_judger_run.delay(self._compile_args()).get()
+        # return _celery_judger_run(self._compile_args())
+        return _celery_judger_run.delay(self._compile_args()).get()
 
     def _run(self):
-        return _celery_judger_run(self._run_args())
-        #return _celery_judger_run.delay(self._run_args()).get()
+        # return _celery_judger_run(self._run_args())
+        return _celery_judger_run.delay(self._run_args()).get()
 
     def _compile_args(self):
         return dict(
