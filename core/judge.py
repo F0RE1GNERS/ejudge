@@ -1,7 +1,7 @@
-import os, re
-from .program import Program
+import os
+import shutil
+import subprocess
 from config import *
-from .utils import read_partial_data_from_file
 
 
 class Judge:
@@ -13,73 +13,25 @@ class Judge:
         """
         if indicator == '':
             indicator = 'fcmp'
-
-
-    def generate_default_run_cmd(self):
-        self.run_cmd = self.base_run_cmd
-        self.run_cmd.append(self.judge_in_path)
-        self.run_cmd.append(self.judge_ans_path)
-        self.run_cmd.append(self.judge_new_input_path)
-
-    def generate_new_file_for_judge(self, path):
-        if not os.path.exists(path):
-            open(path, "w").close()
-        os.chmod(path, mode=0o666)
+        search_path = [TESTLIB_BUILD_DIR, settings.data_dir]
+        self.running_path = os.path.join(settings.round_dir, 'spj')
+        self.input_path = settings.input_path
+        self.output_path = settings.output_path
+        self.ans_path = settings.ans_path
+        while True:
+            for path in search_path:
+                if indicator in os.listdir(path):
+                    shutil.copyfile(os.path.join(path, indicator), self.running_path)
+                    break
+            if not os.path.exists(self.running_path):
+                try:
+                    shutil.copyfile(os.path.join(TESTLIB_BUILD_DIR, 'fcmp'), self.running_path)
+                except OSError:
+                    print('Judge seems to be not installed?')
+                    raise OSError
 
     def run(self):
-        self.generate_default_run_cmd()
-        self.generate_new_file_for_judge(self.judge_in_path)
-        self.generate_new_file_for_judge(self.judge_ans_path)
-        self.generate_new_file_for_judge(self.judge_new_input_path)
-        res = super().run()
-        if res['result'] > 0:
-            print('Judge Debug: ' + read_partial_data_from_file(self.log_path))
-        return self._judge_text_processing()
-
-    # Returning a dict of all the things to do
-    def _judge_text_processing(self):
-        result = dict()
-
-        result['continue'] = False
-        result['score'] = 0
-        result['message'] = 0
-        result['data'] = ''
-
-        with open(self.output_path, "r") as f:
-            result['data'] = f.read()
-            raw_text = re.sub(r"'.*?'", ' ', result['data'])
-            raw_text = re.split(r'[^A-Za-z0-9]', raw_text)
-            text = []
-            for t in raw_text:
-                if t != '':
-                    text.append(t)
-            text = ' '.join(text)
-            text = text.lower()
-
-            if re.search(r'\bcontinue\b', text) is not None:
-                result['continue'] = True
-
-            if re.search(r'\bstop\b', text) is not None:
-                result['continue'] = False
-
-            if re.search(r'\b(ok|yes|right|correct)\b', text) is not None:
-                result['score'] = 100
-                result['message'] = CORRECT
-
-            if re.search(r'\b(no|wrong)\b', text) is not None:
-                result['score'] = 0
-                result['message'] = WRONG_ANSWER
-
-            pattern = re.search(r'(score|point)[ds]? \d+', text)
-            if pattern is not None:
-                num = int(re.search(r'\d+', pattern.group()).group())
-                num = min(max(num, 0), 100)
-                result['score'] = num
-                result['message'] = OK
-
-            if re.search(r'idleness limit exceeded', text) is not None:
-                result['score'] = 0
-                result['continue'] = False
-                result['message'] = IDLENESS_LIMIT_EXCEEDED
-
-        return result
+        """
+        :return: checker exit code
+        """
+        return subprocess.call([self.running_path, self.input_path, self.output_path, self.ans_path], timeout=10)

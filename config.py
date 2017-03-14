@@ -8,6 +8,7 @@ import pwd
 # Judge server directories
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+TESTLIB_BUILD_DIR = os.path.join(BASE_DIR, 'testlib/build')
 JUDGE_BASE_DIR = '/judge_server'
 JUDGE_BASE_DIR_PAST = '/judge_server_past'
 
