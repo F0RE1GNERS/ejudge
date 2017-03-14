@@ -51,5 +51,3 @@ def get_language(path):
         return 'python'
     elif path.endswith('.java'):
         return 'java'
-
-import_data('_test')

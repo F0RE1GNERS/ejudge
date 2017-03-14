@@ -6,14 +6,14 @@ from .utils import read_partial_data_from_file
 
 class Judge:
     def __init__(self, indicator, settings):
+        """
+        initialize a checker
+        :param indicator: the name of the checker (usually a filename)
+        :param settings: related settings
+        """
+        if indicator == '':
+            indicator = 'fcmp'
 
-        self.input_path = self.output_path
-        self.output_path = os.path.join(self.round_dir, 'judge_result')
-        self.judge_ans_path = os.path.join(self.round_dir, 'judge_ans')
-        self.judge_in_path = os.path.join(self.round_dir, 'in')
-        self.judge_new_input_path = os.path.join(self.round_dir, 'judge_new_input')
-        self.seccomp_rule_name = None
-        self.base_run_cmd = self.run_cmd
 
     def generate_default_run_cmd(self):
         self.run_cmd = self.base_run_cmd
