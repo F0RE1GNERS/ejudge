@@ -28,8 +28,6 @@ def verify_token(data):
 def server_upload(pid):
     result = {'status': 'reject'}
     try:
-        if int(pid) < 0:
-            raise ValueError
         if verify_token(request.authorization):
             target_dir = os.path.join(DATA_DIR, pid)
             if os.path.exists(target_dir):

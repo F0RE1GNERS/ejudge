@@ -88,7 +88,7 @@ class WebserverTest(unittest.TestCase):
 
     def test_judge_a_plus_b_py(self):
         data = self.formatSubmissionJSON(304, 'python', 'a_plus_b/a_plus_b')
-        data.update({'settings': dict(max_time=1000, max_sum_time=10000, max_memory=256, problem_id=1000),
+        data.update({'settings': dict(max_time=1000, max_sum_time=10000, max_memory=256, problem_id='1000'),
                      'judge': 'ncmp'})
         res = self.send_judge(data)
         self.assertEqual(res['verdict'], ACCEPTED)
@@ -97,6 +97,12 @@ class WebserverTest(unittest.TestCase):
         self.upload(1001)
         self.upload(1002)
 
+    def test_judge_nothing(self):
+        data = self.formatSubmissionJSON(304, 'python', 'a_plus_b/a_plus_b')
+        data.update({'settings': dict(max_time=1000, max_sum_time=10000, max_memory=256, problem_id='1000-aaa'),
+                     'judge': 'ncmp'})
+        res = self.send_judge(data)
+        self.assertEqual(res['status'], "reject")
 
 if __name__ == '__main__':
     unittest.main()
