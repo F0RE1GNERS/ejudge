@@ -24,19 +24,14 @@ def verify_token(data):
         return False
 
 
-@app.route('/upload/<tag>/<pid>', methods=['POST'])
-def server_upload(tag, pid):
+@app.route('/upload/<pid>', methods=['POST'])
+def server_upload(pid):
     result = {'status': 'reject'}
     try:
         if int(pid) < 0:
             raise ValueError
         if verify_token(request.authorization):
-            if tag == 'pretest':
-                target_dir = os.path.join(PRETEST_DIR, pid)
-            elif tag == 'data':
-                target_dir = os.path.join(DATA_DIR, pid)
-            else:
-                raise ValueError
+            target_dir = os.path.join(DATA_DIR, pid)
             if os.path.exists(target_dir):
                 shutil.rmtree(target_dir)
             os.mkdir(target_dir)

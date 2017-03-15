@@ -40,6 +40,24 @@ class WebserverTest(unittest.TestCase):
                 code_path += '.java'
         return {"id": submission_id, "lang": lang, "code": open('test_src/' + code_path, "r").read()}
 
+    @staticmethod
+    def add_listdir_to_file(source_dir, target_path):
+        import zipfile
+        f = zipfile.ZipFile(target_path, 'w', zipfile.ZIP_DEFLATED)
+        for filename in os.listdir(source_dir):
+            real_path = os.path.join(source_dir, filename)
+            if os.path.isfile(real_path):
+                f.write(real_path, arcname=filename)
+        f.close()
+
+    @staticmethod
+    def upload(id):
+        url = URL + '/upload/%d' % id
+        WebserverTest.add_listdir_to_file('test_data/data/%d' % id, 'test_data/upload.zip')
+        with open('test_data/upload.zip', 'rb') as f:
+            res = requests.post(url, data=f.read(), auth=('token', TOKEN), headers=SIMPLE_HEADERS).json()
+        print(json.dumps(res))
+
     def test_judge_a_plus_b(self):
         data = self.formatSubmissionJSON(300, 'cpp', 'a_plus_b/a_plus_b_c_ok')
         data.update({'settings': dict(max_time=1000, max_sum_time=10000, max_memory=256, problem_id=1000),
@@ -75,100 +93,9 @@ class WebserverTest(unittest.TestCase):
         res = self.send_judge(data)
         self.assertEqual(res['verdict'], ACCEPTED)
 
-
-    # A * B Problem Test
-
-    # def test_judge_a_mul_b_cpp(self):
-    #     data = dict(
-    #         submissions=[
-    #             self.formatSubmissionJSON(100, 'cpp', 'a_mul_b/a_mul_b_c_int'),
-    #             self.formatSubmissionJSON(101, 'cpp', 'a_mul_b/a_mul_b_c_long')
-    #         ],
-    #         judge=self.formatSubmissionJSON(200, 'cpp', 'a_mul_b/a_mul_b_c_judge'),
-    #         config={'problem_id': 1001}
-    #     )
-    #     res = self.send_judge(data)
-    #     self.assertEqual(res['code'], FINISHED, 'Judge Failed for REASON: %s; JSON: %s'
-    #                      % (ERROR_CODE[res['code']], json.dumps(res)))
-    #
-    # def test_judge_a_mul_b_python(self):
-    #     data = dict(
-    #         submissions=[
-    #             self.formatSubmissionJSON(100, 'cpp', 'a_mul_b/a_mul_b_c_int'),
-    #             self.formatSubmissionJSON(101, 'cpp', 'a_mul_b/a_mul_b_c_long')
-    #         ],
-    #         judge=self.formatSubmissionJSON(201, 'python', 'a_mul_b/a_mul_b_p_judge'),
-    #         config={'problem_id': 1001}
-    #     )
-    #     res = self.send_judge(data)
-    #     self.assertEqual(res['code'], FINISHED, 'Judge Failed for REASON: %s; JSON: %s'
-    #                      % (ERROR_CODE[res['code']], json.dumps(res)))
-    #
-    # def test_pretest_a_mul_b(self):
-    #     data = dict(
-    #         submission=self.formatSubmissionJSON(100, 'cpp', 'a_mul_b/a_mul_b_c_int'),
-    #         judge=self.formatSubmissionJSON(201, 'python', 'a_mul_b/a_mul_b_p_judge'),
-    #         config={'problem_id': 1001}
-    #     )
-    #     res = self.send_pretest(data)
-    #     self.assertEqual(res['code'], PRETEST_PASSED, 'Pretest Failed for REASON: %s; JSON: %s'
-    #                      % (ERROR_CODE[res['code']], json.dumps(res)))
-    #
-    # # Language Test
-    #
-    # def test_language_cpp(self):
-    #     data = dict(
-    #         submission={'id': 2000, 'lang': 'cpp', 'code': open('test_src/language/c.cpp').read()},
-    #         config={'problem_id': 1001}
-    #     )
-    #     res = self.send_pretest(data)
-    #     self.assertEqual(res['code'], PRETEST_PASSED, 'Pretest Failed for REASON: %s; JSON: %s'
-    #                      % (ERROR_CODE[res['code']], json.dumps(res)))
-    #
-    # def test_language_java(self):
-    #     data = dict(
-    #         submission={'id': 2001, 'lang': 'java', 'code': open('test_src/language/Main.java').read()},
-    #         config={'problem_id': 1001}
-    #     )
-    #     res = self.send_pretest(data)
-    #     self.assertEqual(res['code'], PRETEST_PASSED, 'Pretest Failed for REASON: %s; JSON: %s'
-    #                      % (ERROR_CODE[res['code']], json.dumps(res)))
-    #
-    # def test_language_python(self):
-    #     data = dict(
-    #         submission={'id': 2002, 'lang': 'python', 'code': open('test_src/language/p.py').read()},
-    #         config={'problem_id': 1001}
-    #     )
-    #     res = self.send_pretest(data)
-    #     self.assertEqual(res['code'], PRETEST_PASSED, 'Pretest Failed for REASON: %s; JSON: %s'
-    #                      % (ERROR_CODE[res['code']], json.dumps(res)))
-    #
-    # # A + B Problem Test
-    #
-    # def test_judge_a_plus_b_ac(self):
-    #     data = dict(
-    #         submissions=[
-    #             self.formatSubmissionJSON(300, 'cpp', 'a_plus_b/a_plus_b_c_ok')
-    #         ],
-    #         judge=dict(lang='builtin', code='testlib/checker/int_ocmp.py'),
-    #         config={'problem_id': 1000}
-    #     )
-    #     res = self.send_judge(data)
-    #     self.assertEqual(res['code'], FINISHED, 'Judge Failed for REASON: %s; JSON: %s'
-    #                      % (ERROR_CODE[res['code']], json.dumps(res)))
-    #
-    # def test_judge_a_plus_b_wa(self):
-    #     data = dict(
-    #         submissions=[
-    #             self.formatSubmissionJSON(301, 'cpp', 'a_plus_b/a_plus_b_c_wa')
-    #         ],
-    #         pretest_judge=dict(lang='builtin', code='testlib/checker/int_ocmp.py'),
-    #         judge=dict(lang='builtin', code='testlib/checker/int_ocmp.py'),
-    #         config={'problem_id': 1000}
-    #     )
-    #     res = self.send_judge(data)
-    #     self.assertEqual(res['code'], PRETEST_FAILED, 'Judge Failed for REASON: %s; JSON: %s'
-    #                      % (ERROR_CODE[res['code']], json.dumps(res)))
+    def test_upload_data(self):
+        self.upload(1001)
+        self.upload(1002)
 
 
 if __name__ == '__main__':
