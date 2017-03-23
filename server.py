@@ -5,6 +5,7 @@ import shutil
 from flask import request, jsonify
 from config import *
 from core.handler import Handler
+from core.upload import upload_data
 
 try:
     from local_config import HOST, PORT, TOKEN, DEBUG
@@ -29,18 +30,13 @@ def server_upload(pid):
     result = {'status': 'reject'}
     try:
         if verify_token(request.authorization):
-            target_dir = os.path.join(DATA_DIR, pid)
-            if os.path.exists(target_dir):
-                shutil.rmtree(target_dir)
-            os.mkdir(target_dir)
             source_path = os.path.join(TMP_DIR, str(uuid.uuid1()) + '.zip')
             with open(source_path, 'wb') as f:
                 f.write(request.data)
-            source_zip = zipfile.ZipFile(source_path)
-            source_zip.extractall(target_dir)
-            source_zip.close()
-            result['status'] = 'received'
+            if not upload_data(pid, source_path):
+                raise TypeError('Zip file may be not illegal.')
             os.remove(source_path)
+            result['status'] = 'received'
     except Exception as e:
         print(e)
     return jsonify(result)

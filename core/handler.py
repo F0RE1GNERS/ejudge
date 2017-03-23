@@ -70,6 +70,7 @@ class Handler(object):
                 sum_verdict = SUM_TIME_LIMIT_EXCEEDED
                 break
 
+        shutil.rmtree(self.settings.round_dir)  # Clean up in case it blows the hard drive
         response.update({'verdict': sum_verdict, 'time': sum_time, 'memory': sum_memory, 'detail': detail})
         return response
 
