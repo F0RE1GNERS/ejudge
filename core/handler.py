@@ -35,6 +35,7 @@ class Handler(object):
         if compile_result['code'] == COMPILE_ERROR:
             response['verdict'] = COMPILE_ERROR
             response['message'] = compile_result['message']
+            shutil.rmtree(self.settings.round_dir)
             return response
 
         data_set = import_data(self.settings.data_dir)
