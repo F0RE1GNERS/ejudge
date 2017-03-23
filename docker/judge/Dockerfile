@@ -20,6 +20,8 @@ RUN cd judger && ./runtest.sh; exit 0
 # Install checker
 RUN cd testlib && ./build.sh
 
+RUN mkdir ~/.pip
+RUN cp docker/judge/pip.conf ~/.pip/pip.conf
 RUN pip3 install -r requirements.txt
 RUN mkdir -p /judge_server /judge_server/round /judge_server/data /judge_server/tmp
 

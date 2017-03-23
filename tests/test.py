@@ -15,7 +15,7 @@ JSON_BASE_DICT = {"headers": {"Content-Type": "application/json",
 SIMPLE_HEADERS = {'User-Agent': 'Mozilla/5.0 (Windows NT 6.0; WOW64; rv:24.0) Gecko/20100101 Firefox/24.0'}
 LOCAL_URL = 'http://127.0.0.1:4999'
 URL = LOCAL_URL
-TOKEN = 'naive'
+TOKEN = 'elephant'
 
 
 class WebserverTest(unittest.TestCase):
