@@ -15,7 +15,7 @@ TOKEN = 'naive'
 3. run `sudo ./install_dependencies.sh`. (very slow, if you have run this in current version, skip this step)
 4. have a cup of tea or coffee...
 5. run `sudo ./install.sh`
-6. `sudo docker run -it -p 4999:4999 -v /judge_server:/judge_server ejudge/judge:v1`
+6. `sudo docker run -it -p 4999:4999 ejudge/judge:v1`
 
 And if nothing ridiculous pops out, done!
 
