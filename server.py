@@ -1,6 +1,7 @@
 import shortuuid
 import platform
 import uuid
+import traceback
 from flask import request, jsonify
 from config import *
 from core.handler import Handler
@@ -61,6 +62,7 @@ def server_judge():
                 result.update(Handler(request.get_json()).run())
                 result['status'] = 'received'
         except Exception as e:
+            traceback.print_exc()
             result['message'] = repr(e)
     return jsonify(result)
 
