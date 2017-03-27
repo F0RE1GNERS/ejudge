@@ -1,5 +1,6 @@
 import shortuuid
 import platform
+import uuid
 from flask import request, jsonify
 from config import *
 from core.handler import Handler
@@ -20,7 +21,7 @@ def verify_token(data):
 
 
 @app.route('/reset', methods=['GET'])
-def reset_token(pid):
+def reset_token():
     result = {'status': 'reject'}
     try:
         if verify_token(request.authorization):
@@ -28,6 +29,7 @@ def reset_token(pid):
             with open('token.txt', 'w') as f:
                 f.write(password)
             result['message'] = password
+            result['status'] = 'received'
     except Exception as e:
         result['message'] = repr(e)
     return jsonify(result)

@@ -1,21 +1,21 @@
 # eJudge
 
+### Quick Installation
+
+`sudo docker pull registry.cn-hangzhou.aliyuncs.com/ultmaster/ejudge:[version number]`
+
+and run it by `sudo docker run -it -p 4999:4999 ...`
+
+
 ### Installation:
 
 The installation is very simple. (under good web condition of course)
 
 1. clone the repository, and install Docker.
-2. create local_config.py:
-```python
-HOST = '0.0.0.0'
-PORT = 4999
-DEBUG = False
-TOKEN = 'naive'
-```
-3. run `sudo ./install_dependencies.sh`. (very slow, if you have run this in current version, skip this step)
-4. have a cup of tea or coffee...
-5. run `sudo ./install.sh`
-6. `sudo docker run -it -p 4999:4999 ejudge/judge:v1`
+2. run `sudo ./install_dependencies.sh`. (very slow, if you have run this in current version, skip this step)
+3. have a cup of tea or coffee...
+4. run `sudo ./install.sh`
+5. `sudo docker run -it -p 4999:4999 ejudge/judge:v1`
 
 And if nothing ridiculous pops out, done!
 
