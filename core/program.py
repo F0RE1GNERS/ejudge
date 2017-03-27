@@ -55,7 +55,7 @@ class Program(object):
         ).split(' ')
 
     def compile(self):
-        with open(self.src_path, 'w') as f:
+        with open(self.src_path, 'w', encoding='utf-8') as f:
             f.write(self.code)
 
         result = self._compile()
