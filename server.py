@@ -1,26 +1,36 @@
-import uuid
+import shortuuid
 import platform
 from flask import request, jsonify
 from config import *
 from core.handler import Handler
 from core.upload import upload_data
 
-try:
-    from local_config import HOST, PORT, TOKEN, DEBUG
-except ImportError:
-    HOST = '127.0.0.1'
-    PORT = 4999
-    TOKEN = 'naive'
-    DEBUG = True
-
 
 def verify_token(data):
     try:
-        if data.get('username') == 'token' and data.get('password') == TOKEN:
-            return True
-        return False
+        with open('token.txt') as f:
+            TOKEN = f.read().strip()
+            if data.get('username') == 'token' and data.get('password') == TOKEN:
+                return True
+            return False
+    except FileNotFoundError:
+        return True
     except KeyError:
         return False
+
+
+@app.route('/reset', methods=['GET'])
+def reset_token(pid):
+    result = {'status': 'reject'}
+    try:
+        if verify_token(request.authorization):
+            password = shortuuid.ShortUUID().random(12)
+            with open('token.txt', 'w') as f:
+                f.write(password)
+            result['message'] = password
+    except Exception as e:
+        result['message'] = repr(e)
+    return jsonify(result)
 
 
 @app.route('/upload/<pid>', methods=['POST'])
@@ -43,7 +53,6 @@ def server_upload(pid):
 @app.route('/judge', methods=['POST'])
 def server_judge():
     result = {'status': 'reject'}
-    # TODO: return immediately
     if request.is_json:
         try:
             if verify_token(request.authorization):
@@ -57,7 +66,7 @@ def server_judge():
 @app.route('/info', methods=['GET'])
 def server_info():
     result = {'status': 'received', 'error': 'not responding'}
-
+    # This does not need authorization
     try:
         # System Information
         result['system'] = ', '.join(platform.uname())
@@ -108,4 +117,4 @@ def server_info():
 
 
 if __name__ == '__main__':
-    app.run(host=HOST, port=PORT, debug=DEBUG)
+    app.run(host='0.0.0.0', port=4999, debug=False)
