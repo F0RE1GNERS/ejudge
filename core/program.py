@@ -75,8 +75,9 @@ class Program(object):
             open(self.input_path, "w").close()
         result = self._run()
 
-        # Case java: time -= 150
+        # Case java: time -= 150, memory N/A (currently)
         if self.lang == 'java':
+            result['memory'] = 0
             result['cpu_time'] = max(result['cpu_time'] - 150, 0)
 
         # A fake time limit / memory limit exceeded
@@ -120,7 +121,7 @@ class Program(object):
 
     def _run_args(self):
         return dict(
-            max_cpu_time=self.settings.max_time + 500,
+            max_cpu_time=self.settings.max_time,
             max_real_time=self.settings.max_time * 5,
             max_memory=self.settings.max_memory * 1048576 if self.lang != 'java' else -1,
             max_output_size=128 * 1024 * 1024,
