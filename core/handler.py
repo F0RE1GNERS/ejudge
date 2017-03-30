@@ -30,7 +30,7 @@ class Handler(object):
 
     def run(self):
 
-        response = {'id': self.id}
+        response = {'id': self.id, 'score': 0}
         compile_result = self.program.compile()
         if compile_result['code'] == COMPILE_ERROR:
             response['verdict'] = COMPILE_ERROR
@@ -40,7 +40,7 @@ class Handler(object):
 
         data_set = import_data(self.settings.data_dir)
         detail = []
-        test_num, sum_time, sum_memory, sum_verdict = 0, 0, 0, ACCEPTED
+        test_num, sum_time, sum_memory, sum_verdict, accept_case_num = 0, 0, 0, ACCEPTED, 0
 
         for key, val in sorted(data_set.items()):
             self.transfer_data(key, val)
@@ -65,7 +65,9 @@ class Handler(object):
             sum_time += log_info['time']
             sum_memory = max(sum_memory, log_info['memory'])
 
-            if verdict != ACCEPTED:
+            if verdict == ACCEPTED:
+                accept_case_num += 1
+            else:
                 sum_verdict = max(verdict, sum_verdict) if verdict > 0 else verdict
             if sum_time > self.settings.max_sum_time:
                 sum_verdict = SUM_TIME_LIMIT_EXCEEDED
@@ -73,6 +75,10 @@ class Handler(object):
 
         shutil.rmtree(self.settings.round_dir)  # Clean up in case it blows the hard drive
         response.update({'verdict': sum_verdict, 'time': sum_time, 'memory': sum_memory, 'detail': detail})
+
+        if len(data_set) > 0:
+            response['score'] = int(accept_case_num / len(data_set) * 100)
+
         return response
 
     def transfer_data(self, input_file, ans_file):
