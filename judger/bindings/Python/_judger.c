@@ -1,7 +1,7 @@
 #include <unistd.h>
 #include <dlfcn.h>
 #include <sys/types.h>
-#include <python2.7/Python.h>
+#include <python3.4/Python.h>
 #include "../../src/runner.h"
 
 
@@ -46,11 +46,11 @@ static PyObject *judger_run(PyObject *self, PyObject *args, PyObject *kwargs) {
         if (!next) {
             break;
         }
-        if (!PyString_Check(next)) {
+        if (!PyUnicode_Check(next)) {
             // Py_DECREF(next);
             RaiseValueError("arg item must be a string");
         }
-        _config.args[count] = PyString_AsString(next);
+        _config.args[count] = PyUnicode_AsUTF8(next);
         // Py_DECREF(next);
         count++;
     }
@@ -70,20 +70,20 @@ static PyObject *judger_run(PyObject *self, PyObject *args, PyObject *kwargs) {
         if (!next) {
             break;
         }
-        if (!PyString_Check(next)) {
+        if (!PyUnicode_Check(next)) {
             // Py_DECREF(next);
             RaiseValueError("env item must be a string");
         }
-        _config.env[count] = PyString_AsString(next);
+        _config.env[count] = PyUnicode_AsUTF8(next);
         // Py_DECREF(next);
         count++;
     }
     _config.env[count] = NULL;
     // Py_DECREF(env_list);
     // Py_DECREF(env_iter);
-    
-    if (PyString_Check(rule_name)) {
-        _config.seccomp_rule_name = PyString_AsString(rule_name);
+
+    if (PyUnicode_Check(rule_name)) {
+        _config.seccomp_rule_name = PyUnicode_AsUTF8(rule_name);
         // Py_DECREF(rule_path);
     }
     else {
@@ -119,13 +119,15 @@ static PyObject *judger_run(PyObject *self, PyObject *args, PyObject *kwargs) {
 
 
 static PyMethodDef judger_methods[] = {
-    {"run", (PyCFunction) judger_run, METH_KEYWORDS, NULL},
+    {"run", (PyCFunction) judger_run, METH_VARARGS | METH_KEYWORDS, NULL},
     {NULL, NULL, 0, NULL}
 };
 
 
-PyMODINIT_FUNC init_judger(void) {
-    PyObject *module = Py_InitModule3("_judger", judger_methods, NULL);
+PyMODINIT_FUNC PyInit__judger(void) {
+    static struct PyModuleDef moduledef = {PyModuleDef_HEAD_INIT, "judger", NULL, -1, judger_methods, };
+    PyObject *module= PyModule_Create(&moduledef);
+    //PyObject *module = Py_InitModule3("_judger", judger_methods, NULL);
     PyModule_AddIntConstant(module, "VERSION", VERSION);
     PyModule_AddIntConstant(module, "UNLIMITED", UNLIMITED);
     PyModule_AddIntConstant(module, "RESULT_WRONG_ANSWER", WRONG_ANSWER);
@@ -147,4 +149,5 @@ PyMODINIT_FUNC init_judger(void) {
     PyModule_AddIntConstant(module, "ERROR_SETUID_FAILED", SETUID_FAILED);
     PyModule_AddIntConstant(module, "ERROR_EXECVE_FAILED", EXECVE_FAILED);
     PyModule_AddIntConstant(module, "ERROR_SPJ_ERROR", SPJ_ERROR);
+    return module;
 }
