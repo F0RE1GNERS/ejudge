@@ -9,7 +9,6 @@
 #include <wait.h>
 #include <errno.h>
 #include <unistd.h>
-#include <string.h>
 
 #include <sys/time.h>
 #include <sys/resource.h>
@@ -19,33 +18,6 @@
 #include "killer.h"
 #include "child.h"
 #include "logger.h"
-
-int max(int a, int b) { return a > b ? a : b; }
-
-int get_memory_usage(pid_t pid) {
-    FILE* fp;
-    int data, stack;
-    char buf[4096], status_child[4096];
-    char *vm;
-
-    sprintf(status_child, "/proc/%d/status", pid);
-    if ((fp = fopen(status_child, "r")) == NULL)
-        return -1;
-
-    if (fread(buf, 1, 4095, fp) == 0 && ferror(fp))
-        return -1;
-    buf[4095] = '\0';
-    fclose(fp);
-
-    data = stack = 0;
-
-    vm = strstr(buf, "VmData:");
-    if (vm) sscanf(vm, "%*s %d", &data);
-    vm = strstr(buf, "VmStk:");
-    if (vm) sscanf(vm, "%*s %d", &stack);
-
-    return data + stack;    
-}
 
 void init_result(struct result *_result) {
     _result->result = _result->error = SUCCESS;
@@ -109,17 +81,7 @@ void run(struct config *_config, struct result *_result) {
         // wait for child process to terminate
         // on success, returns the process ID of the child whose state has changed;
         // On error, -1 is returned.
-        pid_t pid2;
-        int memory_usage = 128;
-        usleep(15000);
-        do {
-            memory_usage = max(memory_usage, get_memory_usage(child_pid));
-            usleep(15000);
-            // wait for the child process to change state
-            pid2 = wait4(child_pid, &status, WNOHANG, &resource_usage);
-        } while (pid2 == 0);
-
-        if (pid2 == -1) {
+        if (wait4(child_pid, &status, WSTOPPED, &resource_usage) == -1) {
             kill_pid(child_pid);
             ERROR_EXIT(WAIT_FAILED);
         }
@@ -136,7 +98,7 @@ void run(struct config *_config, struct result *_result) {
                                   resource_usage.ru_utime.tv_usec / 1000 +
                                   resource_usage.ru_stime.tv_sec * 1000 +
                                   resource_usage.ru_stime.tv_usec / 1000);
-        _result->memory = memory_usage * 1024;
+        _result->memory = resource_usage.ru_maxrss * 1024;
 
         // get end time
         gettimeofday(&end, NULL);
