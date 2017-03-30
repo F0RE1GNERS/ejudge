@@ -1,15 +1,15 @@
 import requests
 
-from server import HOST, TOKEN, PORT
+from server import PORT
 
 
 class HealthCheck:
     def __init__(self):
-        self.url = 'http://%s:%d' % (HOST, PORT)
+        self.url = 'http://127.0.0.1:%d' % (PORT)
         self.self_discovery_url = self.url + '/info'
 
     def server_info(self):
-        res = requests.get(self.self_discovery_url, auth=('token', TOKEN)).json()
+        res = requests.get(self.self_discovery_url).json()
         return res
 
     def heartbeat(self):

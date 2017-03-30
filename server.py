@@ -7,6 +7,8 @@ from config import *
 from core.handler import Handler
 from core.upload import upload_data
 
+PORT = 4999
+
 
 def verify_token(data):
     try:
@@ -121,4 +123,4 @@ def server_info():
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=4999, debug=False)
+    app.run(host='0.0.0.0', port=PORT, debug=False)

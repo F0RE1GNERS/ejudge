@@ -75,9 +75,9 @@ class Program(object):
             open(self.input_path, "w").close()
         result = self._run()
 
-        # Case java: time -= 110
+        # Case java: time -= 150
         if self.lang == 'java':
-            result['cpu_time'] = max(result['cpu_time'] - 110, 0)
+            result['cpu_time'] = max(result['cpu_time'] - 150, 0)
 
         # A fake time limit / memory limit exceeded
         if result['cpu_time'] > self.settings.max_time or result['result'] == CPU_TIME_LIMIT_EXCEEDED \
