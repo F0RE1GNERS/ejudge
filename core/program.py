@@ -75,13 +75,15 @@ class Program(object):
             open(self.input_path, "w").close()
         result = self._run()
 
-        # TODO: solve java memory problem, maybe a new sandbox?
+        # Case java: time -= 110
         if self.lang == 'java':
-            result['memory'] = 0
+            result['cpu_time'] = max(result['cpu_time'] - 110, 0)
 
         # A fake time limit / memory limit exceeded
-        if result['result'] == CPU_TIME_LIMIT_EXCEEDED or result['result'] == REAL_TIME_LIMIT_EXCEEDED:
-            result['time'] = self.settings.max_time
+        if result['cpu_time'] > self.settings.max_time or result['result'] == CPU_TIME_LIMIT_EXCEEDED \
+                or result['result'] == REAL_TIME_LIMIT_EXCEEDED:
+            result['cpu_time'] = self.settings.max_time
+            result['result'] = CPU_TIME_LIMIT_EXCEEDED
         if result['result'] == MEMORY_LIMIT_EXCEEDED:
             result['memory'] = self.settings.max_memory
 
@@ -98,8 +100,8 @@ class Program(object):
 
     def _compile_args(self):
         return dict(
-            max_cpu_time=600 * 1000,
-            max_real_time=3000 * 1000,
+            max_cpu_time=300 * 1000,
+            max_real_time=1500 * 1000,
             max_memory=-1,
             max_output_size=128 * 1024 * 1024,
             max_process_number=_judger.UNLIMITED,
@@ -118,7 +120,7 @@ class Program(object):
 
     def _run_args(self):
         return dict(
-            max_cpu_time=self.settings.max_time,
+            max_cpu_time=self.settings.max_time + 500,
             max_real_time=self.settings.max_time * 5,
             max_memory=self.settings.max_memory * 1048576 if self.lang != 'java' else -1,
             max_output_size=128 * 1024 * 1024,

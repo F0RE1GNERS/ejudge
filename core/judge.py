@@ -18,6 +18,7 @@ class Judge:
         self.input_path = settings.input_path
         self.output_path = settings.output_path
         self.ans_path = settings.ans_path
+        self.time_limit = int(settings.max_time / 1000 * 10)
         for path in search_path:
             if indicator in os.listdir(path):
                 assert os.path.exists(os.path.join(path, indicator))
@@ -39,4 +40,4 @@ class Judge:
         :return: checker exit code
         """
         return subprocess.call([self.running_path, self.input_path, self.output_path, self.ans_path],
-                               stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT, timeout=10)
+                               stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT, timeout=self.time_limit)
