@@ -101,8 +101,8 @@ class Program(object):
 
     def _compile_args(self):
         return dict(
-            max_cpu_time=300 * 1000,
-            max_real_time=1500 * 1000,
+            max_cpu_time=5000,
+            max_real_time=10000,
             max_memory=-1,
             max_output_size=128 * 1024 * 1024,
             max_process_number=_judger.UNLIMITED,
