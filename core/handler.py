@@ -42,7 +42,7 @@ class Handler(object):
         detail = []
         test_num, sum_time, sum_memory, sum_verdict, accept_case_num = 0, 0, 0, ACCEPTED, 0
 
-        for key, val in sorted(data_set.items()):
+        for key, val in data_set:
             self.transfer_data(key, val)
             test_num += 1
 
