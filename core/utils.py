@@ -25,7 +25,8 @@ def import_data(path):
         return result
     raw_file_list = os.listdir(path)
     file_set = set(raw_file_list)
-    patterns = {'.in$': ['.out', '.ans'], 'input': ['output', 'answer']}
+    patterns = {'.in$': ['.out', '.ans'], '.IN$': ['.OUT', '.ANS'],
+                'input': ['output', 'answer'], 'INPUT': ['OUTPUT', 'ANSWER']}
 
     for file in raw_file_list:
         for pattern_in, pattern_out in patterns.items():
