@@ -67,6 +67,7 @@ class Program(object):
                 response['message'] = read_partial_data_from_file(self.compile_out_path)
             if response['message'] == '' and os.path.exists(self.compile_log_path):
                 response['message'] = read_partial_data_from_file(self.compile_log_path)
+            response['message'] = response['message'].replace(self.run_dir, '~')
         return response
 
     def run(self):
