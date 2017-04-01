@@ -14,12 +14,12 @@ def verify_token(data):
     try:
         with open('token.txt') as f:
             TOKEN = f.read().strip()
+            if not TOKEN:
+                return True
             if data.get('username') == 'token' and data.get('password') == TOKEN:
                 return True
             return False
-    except FileNotFoundError:
-        return True
-    except KeyError:
+    except (FileNotFoundError, KeyError):
         return False
 
 
@@ -123,5 +123,4 @@ def server_info():
 
 
 if __name__ == '__main__':
-    os.chmod('token.txt', 0o600)
     app.run(host='0.0.0.0', port=PORT, debug=False)

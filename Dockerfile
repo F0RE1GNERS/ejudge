@@ -27,6 +27,7 @@ RUN cd testlib && ./build.sh
 
 RUN pip3 install -r requirements.txt
 RUN mkdir -p /judge_server /judge_server/round /judge_server/data /judge_server/tmp
+RUN chmod 600 token.txt
 
 HEALTHCHECK --interval=30s --retries=3 CMD python3 healthcheck.py
 
