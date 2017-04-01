@@ -14,7 +14,7 @@ def _celery_upload(pid, source_path):
         source_zip.extractall(target_dir)
         # Permission control for data
         for file in os.listdir(target_dir):
-            os.chmod(file, 0o400)
+            os.chmod(os.path.join(target_dir, file), 0o400)
         source_zip.close()
         return True
     except Exception as e:
