@@ -123,4 +123,5 @@ def server_info():
 
 
 if __name__ == '__main__':
+    os.chmod('token.txt', 0o600)
     app.run(host='0.0.0.0', port=PORT, debug=False)
