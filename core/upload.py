@@ -11,7 +11,11 @@ def _celery_upload(pid, source_path):
             shutil.rmtree(target_dir)
         os.mkdir(target_dir)
         source_zip = zipfile.ZipFile(source_path)
-        source_zip.extractall(target_dir)
+        for file in source_zip.namelist():
+            try:
+                source_zip.extract(file, path=target_dir)
+            except:
+                pass
         # Permission control for data
         for file in os.listdir(target_dir):
             os.chmod(os.path.join(target_dir, file), 0o400)
