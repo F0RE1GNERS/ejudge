@@ -8,4 +8,4 @@ fi
 
 redis-server &
 celery worker -A config.celery &
-python3 server.py
+gunicorn config:app -b 0.0.0.0:4999 -D
