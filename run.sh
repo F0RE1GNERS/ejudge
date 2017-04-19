@@ -8,5 +8,5 @@ fi
 
 redis-server &
 celery worker -A config.celery &
-gunicorn config:app -b 0.0.0.0:4999 -D
+gunicorn server:app -b 0.0.0.0:4999 -D
 /bin/sh
