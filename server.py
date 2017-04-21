@@ -2,10 +2,12 @@ import shortuuid
 import platform
 import uuid
 import traceback
+import shutil
 from flask import request, jsonify
 from config import *
 from core.handler import Handler
 from core.upload import upload_data
+from core.utils import randomize_round_id
 
 PORT = 4999
 
@@ -42,30 +44,38 @@ def reset_token():
 def server_upload(pid):
     result = {'status': 'reject'}
     try:
-        if verify_token(request.authorization):
-            source_path = os.path.join(TMP_DIR, str(uuid.uuid1()) + '.zip')
-            with open(source_path, 'wb') as f:
-                f.write(request.data)
-            if not upload_data(pid, source_path):
-                raise TypeError('Zip file may be not illegal.')
-            os.remove(source_path)
-            result['status'] = 'received'
-    except Exception as e:
-        result['message'] = repr(e)
+        source_path = os.path.join(TMP_DIR, str(uuid.uuid1()) + '.zip')
+        try:
+            if verify_token(request.authorization):
+                with open(source_path, 'wb') as f:
+                    f.write(request.data)
+                if not upload_data(pid, source_path):
+                    raise TypeError('Zip file may be not illegal.')
+                result['status'] = 'received'
+        except Exception as e:
+            result['message'] = repr(e)
+        os.remove(source_path)
+    except Exception as e2:
+        result['message'] = repr(e2)
     return jsonify(result)
 
 
 @app.route('/judge', methods=['POST'])
 def server_judge():
     result = {'status': 'reject'}
-    if request.is_json:
+    try:
+        round_id = randomize_round_id()
+        round_dir = os.path.join(ROUND_DIR, str(round_id))
         try:
             if verify_token(request.authorization):
-                result.update(Handler(request.get_json()).run())
+                result.update(Handler(request.get_json(), round_id).run())
                 result['status'] = 'received'
         except Exception as e:
             traceback.print_exc()
             result['message'] = repr(e)
+        shutil.rmtree(round_dir, ignore_errors=True)
+    except Exception as e2:
+        result['message'] = repr(e2)
     return jsonify(result)
 
 
@@ -106,6 +116,7 @@ def server_info():
                     if line.strip():
                         java_info.append(line.strip())
                 result['java'] = ', '.join(java_info)
+        os.remove(java_info_path)
 
         result['python'] = os.popen('python3 --version').readline().strip()
 

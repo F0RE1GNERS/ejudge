@@ -57,17 +57,20 @@ class Program(object):
     def compile(self):
         with open(self.src_path, 'w', encoding='utf-8') as f:
             f.write(self.code)
-
-        result = self._compile()
-        # print("Compile Result of " + self.lang + ": " + str(result))
         response = {"code": 0, "message": ""}
-        if result["result"] != _judger.RESULT_SUCCESS:
+        try:
+            result = self._compile()
+            # print("Compile Result of " + self.lang + ": " + str(result))
+            if result["result"] != _judger.RESULT_SUCCESS:
+                response['code'] = COMPILE_ERROR
+                if os.path.exists(self.compile_out_path):
+                    response['message'] = read_partial_data_from_file(self.compile_out_path)
+                if response['message'] == '' and os.path.exists(self.compile_log_path):
+                    response['message'] = read_partial_data_from_file(self.compile_log_path)
+                response['message'] = response['message'].replace(self.run_dir, '~')
+        except:
             response['code'] = COMPILE_ERROR
-            if os.path.exists(self.compile_out_path):
-                response['message'] = read_partial_data_from_file(self.compile_out_path)
-            if response['message'] == '' and os.path.exists(self.compile_log_path):
-                response['message'] = read_partial_data_from_file(self.compile_log_path)
-            response['message'] = response['message'].replace(self.run_dir, '~')
+            response['message'] = 'N/A'
         return response
 
     def run(self):

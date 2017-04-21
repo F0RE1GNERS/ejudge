@@ -9,7 +9,7 @@ from config import *
 
 class Handler(object):
 
-    def __init__(self, data):
+    def __init__(self, data, round_id):
         """
         :param data: including the following
         id: the id of the code, used in returned data
@@ -17,6 +17,7 @@ class Handler(object):
         lang: language can now be c, cpp, java, python
         settings: should be an entire problem setting as demonstrated in RoundSettings
         judge: an indicator of judge used
+        :param round_id: round dir name
         """
         # Handling a not complete data?
         # Therefore we are checking them first
@@ -24,7 +25,7 @@ class Handler(object):
         self.id = data['id']
         self.code = data['code']
         self.lang = data['lang']
-        self.settings = RoundSettings(data['settings'])
+        self.settings = RoundSettings(data['settings'], round_id)
         self.program = Program(self.code, self.lang, self.settings)
         self.judge = Judge(data['judge'], self.settings)
 
@@ -35,7 +36,6 @@ class Handler(object):
         if compile_result['code'] == COMPILE_ERROR:
             response['verdict'] = COMPILE_ERROR
             response['message'] = compile_result['message']
-            shutil.rmtree(self.settings.round_dir)
             return response
 
         data_set = import_data(self.settings.data_dir)
@@ -73,7 +73,6 @@ class Handler(object):
                 sum_verdict = SUM_TIME_LIMIT_EXCEEDED
                 break
 
-        shutil.rmtree(self.settings.round_dir)  # Clean up in case it blows the hard drive
         response.update({'verdict': sum_verdict, 'time': sum_time, 'memory': sum_memory, 'detail': detail})
 
         if len(data_set) > 0:

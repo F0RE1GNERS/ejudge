@@ -5,6 +5,9 @@
 FROM ubuntu:16.04
 MAINTAINER ultmaster scottyugochang@hotmail.com
 ENV DEBIAN_FRONTEND noninteractive
+ENV LANG en_US.UTF-8
+ENV LANGUAGE en_US:en
+ENV LC_ALL en_US.UTF-8
 
 RUN apt-get update
 RUN apt-get -y install software-properties-common python-software-properties python python-dev python-pip \
