@@ -73,7 +73,7 @@ def server_judge():
         except Exception as e:
             traceback.print_exc()
             result['message'] = repr(e)
-        shutil.rmtree(round_dir, ignore_errors=True)
+        # shutil.rmtree(round_dir, ignore_errors=True)
     except Exception as e2:
         result['message'] = repr(e2)
     return jsonify(result)
