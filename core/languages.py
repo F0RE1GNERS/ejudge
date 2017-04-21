@@ -36,7 +36,7 @@ LANGUAGE_SETTINGS = {
         "max_memory": 128 * 1024 * 1024,
         "compile_cmd": "/usr/bin/python3 -m py_compile {src_path}",
         "exe_cmd": "/usr/bin/python3 {exe_path}",
-        "seccomp_rule": None,
-        "env": []
+        "seccomp_rule": "general",
+        "env": ["LANG=en_US.UTF-8"]
     }
 }
