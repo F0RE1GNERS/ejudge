@@ -110,7 +110,7 @@ void run(struct config *_config, struct result *_result) {
         // on success, returns the process ID of the child whose state has changed;
         // On error, -1 is returned.
         pid_t pid2;
-        int memory_usage = 128;
+        int memory_usage = 0;
         usleep(15000);
         do {
             memory_usage = max(memory_usage, get_memory_usage(child_pid));

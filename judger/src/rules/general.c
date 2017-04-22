@@ -5,7 +5,8 @@
 
 
 int general_seccomp_rules(struct config *_config) {
-    int syscalls_blacklist[] = {SCMP_SYS(socket), SCMP_SYS(clone),
+    int syscalls_blacklist[] = {//SCMP_SYS(socket),
+                                SCMP_SYS(clone),
                                 SCMP_SYS(fork), SCMP_SYS(vfork),
                                 SCMP_SYS(writev), SCMP_SYS(kill),
                                 SCMP_SYS(chdir), SCMP_SYS(fchdir),

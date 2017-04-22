@@ -94,3 +94,18 @@ class SeccompTest(base.BaseTestCase):
         result = _judger.run(**config)
         self.assertEqual(result["result"], _judger.RESULT_RUNTIME_ERROR)
         self.assertEqual(result["signal"], 31)
+
+    def test_python_working(self):
+        config = self.config
+        config["max_memory"] = 1024 * 1024 * 1024
+        config["exe_path"] = "/usr/bin/python3"
+        config["args"] = [os.path.abspath(os.path.join(os.path.dirname(__file__),
+                                                       '../../../test_src/seccomp/python_working.py'))]
+        config["output_path"] = config["error_path"] = self.output_path()
+        config["seccomp_rule_name"] = "general"
+        result = _judger.run(**config)
+        self.assertEqual(result["result"], _judger.RESULT_SUCCESS)
+        config["args"] = [os.path.abspath(os.path.join(os.path.dirname(__file__),
+                                                       '../../../test_src/seccomp/python_not_working.py'))]
+        result = _judger.run(**config)
+        self.assertEqual(result["result"], _judger.RESULT_RUNTIME_ERROR)
