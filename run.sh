@@ -8,5 +8,5 @@ fi
 
 redis-server &
 celery worker -A config.celery &
-gunicorn server:app -b 0.0.0.0:4999 --workers 2 --timeout 3600 --graceful-timeout 3600 --loglevel info
+gunicorn server:app -b 0.0.0.0:4999 --workers 2 --timeout 3600 --graceful-timeout 3600 --log-level info
 /bin/sh
