@@ -19,7 +19,7 @@ class IntegrationTest(base.BaseTestCase):
                        "output_path": "/dev/null",
                        "error_path": "/dev/null",
                        "args": [],
-                       "env": ["env=judger_test", "test=judger"],
+                       "env": ["env=judger_test", "test=judger", "LANG=en_US.UTF-8"],
                        "log_path": "judger_test.log",
                        "seccomp_rule_name": None,
                        "uid": 0,
@@ -264,3 +264,13 @@ class IntegrationTest(base.BaseTestCase):
         config["max_output_size"] = 1000 * 10
         result = _judger.run(**config)
         self.assertEqual(result["exit_code"], 2)
+
+    def test_python_chinese(self):
+        config = self.config
+        config["max_memory"] = 1024 * 1024 * 1024
+        config["exe_path"] = "/usr/bin/python3"
+        config["args"] = [os.path.abspath(os.path.join(os.path.dirname(__file__),
+                                                       '../../../test_src/integration/python_chinese.py'))]
+        config["output_path"] = config["error_path"] = self.output_path()
+        result = _judger.run(**config)
+        self.assertEqual(result["result"], _judger.RESULT_SUCCESS)

@@ -116,7 +116,7 @@ class Program(object):
             output_path=self.compile_out_path,
             error_path=self.compile_out_path,
             args=self.compile_cmd[1:],
-            env=[("PATH=" + os.getenv("PATH"))] + self.language_settings['env'],
+            env=["PATH=" + os.getenv("PATH")] + self.language_settings['env'],
             log_path=self.compile_log_path,
             seccomp_rule_name=None,
             uid=COMPILER_USER_UID,  # not safe?
@@ -135,7 +135,7 @@ class Program(object):
             output_path=self.output_path,
             error_path=self.log_path,
             args=self.run_cmd[1:],
-            env=[("PATH=" + os.getenv("PATH"))] + self.language_settings['env'],
+            env=["PATH=" + os.getenv("PATH")] + self.language_settings['env'],
             log_path=self.log_path,
             seccomp_rule_name=self.seccomp_rule_name,
             uid=RUN_USER_UID,
