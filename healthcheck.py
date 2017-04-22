@@ -5,11 +5,11 @@ from server import PORT
 
 class HealthCheck:
     def __init__(self):
-        self.url = 'http://127.0.0.1:%d' % (PORT)
+        self.url = 'http://localhost:%d' % (PORT)
         self.self_discovery_url = self.url + '/info'
 
     def server_info(self):
-        res = requests.get(self.self_discovery_url).json()
+        res = requests.get(self.self_discovery_url, timeout=15).json()
         return res
 
     def heartbeat(self):
