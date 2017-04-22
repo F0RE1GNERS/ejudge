@@ -5,7 +5,7 @@
 
 
 int general_seccomp_rules(struct config *_config) {
-    int syscalls_blacklist[] = {SCMP_SYS(socket), SCMP_SYS(clone),
+    int syscalls_blacklist[] = {/*SCMP_SYS(socket), SCMP_SYS(clone),
                                 SCMP_SYS(fork), SCMP_SYS(vfork),
                                 SCMP_SYS(writev), SCMP_SYS(kill),
                                 SCMP_SYS(chdir), SCMP_SYS(fchdir),
@@ -13,7 +13,7 @@ int general_seccomp_rules(struct config *_config) {
                                 SCMP_SYS(fchmod), SCMP_SYS(chown),
                                 SCMP_SYS(fchown), SCMP_SYS(lchown),
                                 SCMP_SYS(setuid), SCMP_SYS(setgid),
-                                SCMP_SYS(capset), SCMP_SYS(mount),
+                                SCMP_SYS(capset), SCMP_SYS(mount),*/
                                 SCMP_SYS(sethostname)};
     int syscalls_blacklist_length = sizeof(syscalls_blacklist) / sizeof(int);
     scmp_filter_ctx ctx = NULL;
@@ -28,13 +28,13 @@ int general_seccomp_rules(struct config *_config) {
         }
     }
     // add extra rule for execve
-    if (seccomp_rule_add(ctx, SCMP_ACT_KILL, SCMP_SYS(execve), 1, SCMP_A0(SCMP_CMP_NE, (scmp_datum_t)(_config->exe_path))) != 0) {
+    /*if (seccomp_rule_add(ctx, SCMP_ACT_KILL, SCMP_SYS(execve), 1, SCMP_A0(SCMP_CMP_NE, (scmp_datum_t)(_config->exe_path))) != 0) {
         return LOAD_SECCOMP_FAILED;
     }
     // only fd 0 1 2 are allowed
     if (seccomp_rule_add(ctx, SCMP_ACT_KILL, SCMP_SYS(write), 1, SCMP_A0(SCMP_CMP_GT, 2)) != 0) {
         return LOAD_SECCOMP_FAILED;
-    }
+    }*/
     if (seccomp_load(ctx) != 0) {
         return LOAD_SECCOMP_FAILED;
     }
