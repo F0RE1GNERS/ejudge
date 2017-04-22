@@ -126,7 +126,7 @@ class Program(object):
     def _run_args(self):
         return dict(
             max_cpu_time=self.settings.max_time,
-            max_real_time=self.settings.max_time * 5,
+            max_real_time=self.settings.max_time * 3,
             max_memory=self.settings.max_memory * 1048576 if self.lang != 'java' else -1,
             max_output_size=128 * 1024 * 1024,
             max_process_number=_judger.UNLIMITED,
