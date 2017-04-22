@@ -63,19 +63,17 @@ def server_upload(pid):
 @app.route('/judge', methods=['POST'])
 def server_judge():
     result = {'status': 'reject'}
+    round_id = randomize_round_id()
+    round_dir = os.path.join(ROUND_DIR, str(round_id))
     try:
-        round_id = randomize_round_id()
-        round_dir = os.path.join(ROUND_DIR, str(round_id))
-        try:
-            if verify_token(request.authorization):
-                result.update(Handler(request.get_json(), round_id).run())
-                result['status'] = 'received'
-        except Exception as e:
-            traceback.print_exc()
-            result['message'] = repr(e)
+        if verify_token(request.authorization):
+            result.update(Handler(request.get_json(), round_id).run())
+            result['status'] = 'received'
+    except Exception as e:
+        traceback.print_exc()
+        result['message'] = repr(e)
+    finally:
         shutil.rmtree(round_dir, ignore_errors=True)
-    except Exception as e2:
-        result['message'] = repr(e2)
     return jsonify(result)
 
 
