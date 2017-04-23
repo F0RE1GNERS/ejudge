@@ -6,7 +6,8 @@ if [ `id -u` -ne 0 ]; then
     exit 1
 fi
 
+core=$(grep --count ^processor /proc/cpuinfo)
+n=$(($core*4))
 redis-server &
 celery worker -A config.celery &
-gunicorn server:app -b 0.0.0.0:4999 --workers 10 --timeout 3600 --graceful-timeout 3600 --log-level info
-/bin/sh
+gunicorn server:app --workers $n --threads $n --error-logfile /var/log/gunicorn.log --timeout 3600 --graceful-timeout 3600 --bind 0.0.0.0:4999
