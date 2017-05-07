@@ -1,4 +1,5 @@
 import shutil
+import os
 from random import Random
 from .program import Program
 from .judge import Judge
@@ -88,3 +89,6 @@ class Handler(object):
         """
         shutil.copyfile(os.path.join(self.settings.data_dir, input_file), self.settings.input_path)
         shutil.copyfile(os.path.join(self.settings.data_dir, ans_file), self.settings.ans_path)
+        os.chmod(self.settings.input_path, 0o400)
+        os.chmod(self.settings.ans_path, 0o400)
+        
