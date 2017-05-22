@@ -55,4 +55,5 @@ def judge(data_name, source_name, max_time=1000, max_sum_time=10000, max_memory=
 
 
 if __name__ == '__main__':
-    judge('string', 'string_slow.cpp', max_time=3000, max_sum_time=30000)
+    judge('a+b', 'a+b_wa.cpp', max_time=3000, max_sum_time=30000)
+    judge('a+b', 'a+b_ce.cpp', max_time=3000, max_sum_time=30000)
