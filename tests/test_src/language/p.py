@@ -1,3 +1,0 @@
-import testlib, os
-
-print('?')
