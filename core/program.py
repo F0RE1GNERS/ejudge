@@ -77,11 +77,6 @@ class Program(object):
             open(input_path, "w").close()
         result = _judger.run(**self._run_args(input_path, output_path, log_path))
 
-        # Case java: time -= 150, memory N/A (currently)
-        if self.lang == 'java':
-            result['memory'] = 0
-            result['cpu_time'] = max(result['cpu_time'] - 150, 0)
-
         # A fake time limit / memory limit exceeded
         if result['cpu_time'] > self.settings.max_time or result['result'] == CPU_TIME_LIMIT_EXCEEDED \
                 or result['result'] == REAL_TIME_LIMIT_EXCEEDED:
@@ -96,10 +91,6 @@ class Program(object):
     def _compile(self):
         # return _celery_judger_run(self._compile_args())
         return _celery_judger_run.delay(self._compile_args()).get()
-
-    def _run(self):
-        # return _judger.run(**self._run_args())
-        return _celery_judger_run.delay(self._run_args()).get()
 
     def _compile_args(self):
         return dict(

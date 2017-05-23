@@ -1,5 +1,6 @@
 import shutil
 import os
+import time
 from .program import Program
 from .judge import Judge
 from .settings import RoundSettings
@@ -11,29 +12,32 @@ from .utils import random_string
 
 @celery.task
 def run_test(config_data, round_id, count, key, val):
-    settings = RoundSettings(config_data['settings'], round_id)
-    program = Program(config_data['code'], config_data['lang'], settings)
-    judge = Judge(config_data['judge'], settings, initial=False)
-    input_path = os.path.join(settings.round_dir, random_string(32))
-    output_path = os.path.join(settings.round_dir, random_string(32))
-    ans_path = os.path.join(settings.round_dir, random_string(32))
-    log_path = os.path.join(settings.round_dir, random_string(32))
-    Handler.transfer_data(settings.data_dir, key, val, input_path, ans_path)
+    try:
+        settings = RoundSettings(config_data['settings'], round_id)
+        program = Program(config_data['code'], config_data['lang'], settings)
+        judge = Judge(config_data['judge'], settings, initial=False)
+        input_path = os.path.join(settings.data_dir, key)
+        output_path = os.path.join(settings.round_dir, random_string(32))
+        ans_path = os.path.join(settings.data_dir, val)
+        log_path = os.path.join(settings.round_dir, random_string(32))
 
-    running_result = program.run(input_path, output_path, log_path)
+        running_result = program.run(input_path, output_path, log_path)
 
-    verdict = running_result['result']
-    if verdict == 0:
-        checker_exit_code = judge.run(input_path, output_path, ans_path)
-        if checker_exit_code != 0:
-            verdict = WRONG_ANSWER
+        verdict = running_result['result']
+        if verdict == 0:
+            checker_exit_code = judge.run(input_path, output_path, ans_path)
+            if checker_exit_code != 0:
+                verdict = WRONG_ANSWER
 
-    return dict(
-        count=count,
-        time=running_result['cpu_time'],
-        memory=running_result['memory'] // 1024,
-        verdict=verdict
-    )
+        return dict(
+            count=count,
+            time=running_result['cpu_time'],
+            memory=running_result['memory'] // 1024,
+            verdict=verdict
+        )
+    except Exception as e:
+        print(repr(e))
+        return dict(count=count, time=0, memory=0, verdict=SYSTEM_ERROR)
 
 
 class Handler(object):
@@ -78,24 +82,15 @@ class Handler(object):
 
         sum_time = sum(x.get('time', 0) for x in detail)
         sum_memory = max(x.get('memory', 0) for x in detail)
-        wrong_cases = list(filter(lambda x: x.get('verdict', -1) != ACCEPTED, detail))
+        wrong_cases = list(filter(lambda x: x.get('verdict', WRONG_ANSWER) != ACCEPTED, detail))
         sum_verdict = ACCEPTED
         if wrong_cases:
-            sum_verdict = max(x.get('verdict', -1) for x in wrong_cases)
-        if sum_time > self.settings.max_sum_time:
-            sum_verdict = SUM_TIME_LIMIT_EXCEEDED
+            sum_verdict = max(x.get('verdict', WRONG_ANSWER) for x in wrong_cases)
         accept_case_num = len(detail) - len(wrong_cases)
 
         response.update({'verdict': sum_verdict, 'time': sum_time, 'memory': sum_memory, 'detail': detail})
 
-        if len(data_set) > 0:
-            response['score'] = int(accept_case_num / len(data_set) * 100)
+        if len(detail) > 0:
+            response['score'] = int(accept_case_num / len(detail) * 100)
 
         return response
-
-    @staticmethod
-    def transfer_data(data_dir, input_file, ans_file, input_dst, ans_dst):
-        shutil.copyfile(os.path.join(data_dir, input_file), input_dst)
-        shutil.copyfile(os.path.join(data_dir, ans_file), ans_dst)
-        os.chmod(input_dst, 0o400)
-        os.chmod(ans_dst, 0o400)
