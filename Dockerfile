@@ -9,7 +9,8 @@ ENV DEBIAN_FRONTEND noninteractive
 RUN apt-get update
 RUN apt-get -y install software-properties-common python-software-properties python python-dev python-pip \
     locales python3-software-properties python3 python3-dev python3-pip \
-    gcc g++ git libtool python-pip libseccomp-dev cmake openjdk-8-jdk nginx redis-server
+    gcc g++ git libtool python-pip libseccomp-dev cmake openjdk-8-jdk nginx redis-server \
+    mono-devel php
 
 RUN locale-gen en_US.UTF-8
 ENV LANG en_US.UTF-8
