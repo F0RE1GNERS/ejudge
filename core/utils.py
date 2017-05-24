@@ -1,6 +1,8 @@
 import uuid
 import os
 import re
+import random
+import string
 
 
 def import_data(path):
@@ -52,3 +54,7 @@ def read_partial_data_from_file(filename, length=4096):
 
 def randomize_round_id():
     return str(uuid.uuid1())
+
+
+def random_string(length):
+    return ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(length))

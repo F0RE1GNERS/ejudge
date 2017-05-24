@@ -1,108 +1,66 @@
-# coding=utf-8
-import shutil
-from os import sys, path
+from os import path
 import requests
+import time
 import json
-from requests.auth import HTTPBasicAuth
-import unittest
-import zipfile
-from config import *
 
-sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
+TOKEN = 'naive'
+URL = 'http://127.0.0.1:4999/'
+BASE_DIR = path.dirname(path.abspath(__file__))
 
-JSON_BASE_DICT = {"headers": {"Content-Type": "application/json",
-                              'User-Agent': 'Mozilla/5.0 (Windows NT 6.0; WOW64; rv:24.0) Gecko/20100101 Firefox/24.0'}}
-SIMPLE_HEADERS = {'User-Agent': 'Mozilla/5.0 (Windows NT 6.0; WOW64; rv:24.0) Gecko/20100101 Firefox/24.0'}
-LOCAL_URL = 'http://127.0.0.1:4999'
-URL = LOCAL_URL
-TOKEN = 'elephant'
+PROBLEM_ID = 1
+UPLOAD_URL = URL + 'upload/%d' % PROBLEM_ID
+JUDGE_URL = URL + 'judge'
+LANG_SET = [
+    ('.c', 'c'),
+    ('.cpp', 'cpp'),
+    ('.java', 'java'),
+    ('.py', 'python')
+]
 
 
-class WebserverTest(unittest.TestCase):
+def judge(data_name, source_name, max_time=1000, max_sum_time=10000, max_memory=256, judge='ncmp'):
+    data_name = path.join(BASE_DIR, 'test_data/' + data_name + '.zip')
+    source_name = path.join(BASE_DIR, 'test_src/' + source_name)
+    lang = None
+    for ext, name in LANG_SET:
+        if source_name.endswith(ext):
+            lang = name
+            break
+    if not lang:
+        raise TypeError('Unrecognized language.')
+    with open(source_name) as f:
+        code = f.read()
 
-    @staticmethod
-    def send_judge(data):
-        kwargs = JSON_BASE_DICT.copy()
-        kwargs["data"] = json.dumps(data)
-        url = URL + '/judge'
-        res = requests.post(url, json=data, auth=('token', TOKEN)).json()
-        print(json.dumps(res))
-        return res
-
-    @staticmethod
-    def formatSubmissionJSON(submission_id=0, lang='cpp', code_path=''):
-        if '.' not in code_path:
-            if lang == 'cpp':
-                code_path += '.cpp'
-            elif lang == 'python':
-                code_path += '.py'
-            elif lang == 'java':
-                code_path += '.java'
-        return {"id": submission_id, "lang": lang, "code": open('test_src/' + code_path, "r").read()}
-
-    @staticmethod
-    def add_listdir_to_file(source_dir, target_path):
-        import zipfile
-        f = zipfile.ZipFile(target_path, 'w', zipfile.ZIP_DEFLATED)
-        for filename in os.listdir(source_dir):
-            real_path = os.path.join(source_dir, filename)
-            if os.path.isfile(real_path):
-                f.write(real_path, arcname=filename)
-        f.close()
-
-    @staticmethod
-    def upload(id):
-        url = URL + '/upload/%d' % id
-        WebserverTest.add_listdir_to_file('test_data/data/%d' % id, 'test_data/upload.zip')
-        with open('test_data/upload.zip', 'rb') as f:
-            res = requests.post(url, data=f.read(), auth=('token', TOKEN), headers=SIMPLE_HEADERS).json()
-        print(json.dumps(res))
-
-    def test_judge_a_plus_b(self):
-        data = self.formatSubmissionJSON(300, 'cpp', 'a_plus_b/a_plus_b_c_ok')
-        data.update({'settings': dict(max_time=1000, max_sum_time=10000, max_memory=256, problem_id=1000),
-                     'judge': 'ncmp'})
-        res = self.send_judge(data)
-        self.assertEqual(res['verdict'], ACCEPTED)
-
-    def test_judge_a_plus_b_wa(self):
-        data = self.formatSubmissionJSON(301, 'cpp', 'a_plus_b/a_plus_b_c_wa')
-        data.update({'settings': dict(max_time=1000, max_sum_time=10000, max_memory=256, problem_id=1000),
-                     'judge': 'ncmp'})
-        res = self.send_judge(data)
-        self.assertEqual(res['verdict'], WRONG_ANSWER)
-
-    def test_judge_a_plus_b_ce(self):
-        data = self.formatSubmissionJSON(302, 'cpp', 'a_plus_b/a_plus_b_c_ce')
-        data.update({'settings': dict(max_time=1000, max_sum_time=10000, max_memory=256, problem_id=1000),
-                     'judge': 'ncmp'})
-        res = self.send_judge(data)
-        self.assertEqual(res['verdict'], COMPILE_ERROR)
-
-    def test_judge_a_plus_b_java(self):
-        data = self.formatSubmissionJSON(303, 'java', 'a_plus_b/a_plus_b')
-        data.update({'settings': dict(max_time=1000, max_sum_time=10000, max_memory=256, problem_id=1000),
-                     'judge': 'ncmp'})
-        res = self.send_judge(data)
-        self.assertEqual(res['verdict'], ACCEPTED)
-
-    def test_judge_a_plus_b_py(self):
-        data = self.formatSubmissionJSON(304, 'python', 'a_plus_b/a_plus_b')
-        data.update({'settings': dict(max_time=1000, max_sum_time=10000, max_memory=256, problem_id='1000'),
-                     'judge': 'ncmp'})
-        res = self.send_judge(data)
-        self.assertEqual(res['verdict'], ACCEPTED)
-
-    def test_upload_data(self):
-        self.upload(1001)
-        self.upload(1002)
-
-    def test_judge_nothing(self):
-        data = self.formatSubmissionJSON(304, 'python', 'a_plus_b/a_plus_b')
-        data.update({'settings': dict(max_time=1000, max_sum_time=10000, max_memory=256, problem_id='1000-aaa'),
-                     'judge': 'ncmp'})
-        res = self.send_judge(data)
-        self.assertEqual(res['status'], "reject")
+    with open(data_name, 'rb') as f:
+        result = requests.post(UPLOAD_URL, data=f.read(), auth=('token', TOKEN)).json()
+        print('Uploading result:', result)
+        if not result['status'] == 'received':
+            raise ConnectionError('Remote server reject the request')
+    start_time = time.time()
+    data = {
+        "id": 1,
+        "lang": lang,
+        "code": code,
+        "settings": {
+            "max_time": max_time,
+            "max_sum_time": max_sum_time,
+            "max_memory": max_memory,
+            "problem_id": str(PROBLEM_ID),
+        },
+        "judge": judge,
+    }
+    result = requests.post(JUDGE_URL, json=data, auth=('token', TOKEN)).json()
+    print('Judge result:', result)
+    end_time = time.time()
+    print('Time elapsed:', end_time - start_time)
+    return result
 
 if __name__ == '__main__':
-    unittest.main()
+    # judge('string', 'string_fast.cpp', max_time=3000, max_sum_time=0)
+    # judge('a+b', 'a+b_wa.cpp', max_time=3000, max_sum_time=0)
+    # judge('a+b', 'a+b_ce.cpp', max_time=3000, max_sum_time=0)
+    # judge('a+b', 'a+b.java', max_time=1000)
+    res1 = judge('string', 'string_slow.cpp', max_time=3000, max_sum_time=0)
+    res2 = judge('string2', 'string_slow.cpp', max_time=3000, max_sum_time=0)
+    print(list(filter(lambda x: x.get('count') == 13, res1['detail']))[0], res2['detail'][0])
+    # judge('string', 'string_hash.cpp', max_time=6000, max_sum_time=0)

@@ -22,29 +22,50 @@
 
 int max(int a, int b) { return a > b ? a : b; }
 
-int get_memory_usage(pid_t pid) {
-    FILE* fp;
-    int data, stack;
-    char buf[4096], status_child[4096];
-    char *vm;
+int get_proc_info(pid_t pid, procinfo * pinfo)
+{
+    char szFileName [_POSIX_PATH_MAX], szStatStr [2048], *s, *t;
+    FILE *fp;
 
-    sprintf(status_child, "/proc/%d/status", pid);
-    if ((fp = fopen(status_child, "r")) == NULL)
+    if (NULL == pinfo) {
+        errno = EINVAL;
         return -1;
+    }
 
-    if (fread(buf, 1, 4095, fp) == 0 && ferror(fp))
-        return -1;
-    buf[4095] = '\0';
-    fclose(fp);
+    sprintf (szFileName, "/proc/%u/stat", (unsigned) pid);
 
-    data = stack = 0;
+    if (-1 == access (szFileName, R_OK)) {
+        return (pinfo->pid = -1);
+    }
 
-    vm = strstr(buf, "VmData:");
-    if (vm) sscanf(vm, "%*s %d", &data);
-    vm = strstr(buf, "VmStk:");
-    if (vm) sscanf(vm, "%*s %d", &stack);
+    if ((fp = fopen (szFileName, "r")) == NULL) {
+        return (pinfo->pid = -1);
+    }
 
-    return data + stack;
+    if ((s = fgets (szStatStr, 2048, fp)) == NULL) {
+        fclose (fp);
+        return (pinfo->pid = -1);
+    }
+
+    // puts(szStatStr);
+
+    /** pid **/
+    sscanf (szStatStr, "%u", &(pinfo->pid));
+    s = strchr (szStatStr, '(') + 1;
+    t = strchr (szStatStr, ')');
+    strncpy (pinfo->exName, s, t - s);
+    pinfo->exName [t - s] = '\0';
+
+    sscanf (t + 2, "%c %d %d %d %d %d %u %u %u %u %u %d %d %d %d %d %d %u %u %d %u %u %u %u %u %u %u %u %d %d %d %d %u",
+      /*             1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33*/
+      &(pinfo->state), &(pinfo->ppid), &(pinfo->pgrp), &(pinfo->session), &(pinfo->tty), &(pinfo->tpgid),
+      &(pinfo->flags), &(pinfo->minflt), &(pinfo->cminflt), &(pinfo->majflt), &(pinfo->cmajflt), &(pinfo->utime),
+      &(pinfo->stime), &(pinfo->cutime), &(pinfo->cstime), &(pinfo->counter), &(pinfo->priority), &(pinfo->timeout),
+      &(pinfo->itrealvalue), &(pinfo->starttime), &(pinfo->vsize), &(pinfo->rss), &(pinfo->rlim), &(pinfo->startcode),
+      &(pinfo->endcode), &(pinfo->startstack), &(pinfo->kstkesp), &(pinfo->kstkeip), &(pinfo->signal),
+      &(pinfo->blocked), &(pinfo->sigignore), &(pinfo->sigcatch), &(pinfo->wchan));
+    fclose (fp);
+    return 0;
 }
 
 void init_result(struct result *_result) {
@@ -105,16 +126,20 @@ void run(struct config *_config, struct result *_result) {
 
         int status;
         struct rusage resource_usage;
+        procinfo proc_info;
 
         // wait for child process to terminate
         // on success, returns the process ID of the child whose state has changed;
         // On error, -1 is returned.
         pid_t pid2;
-        int memory_usage = 0;
-        usleep(15000);
+        int memory_usage = 0, time_usage = 0;
+        usleep(SLEEP_INTERVAL);
         do {
-            memory_usage = max(memory_usage, get_memory_usage(child_pid));
-            usleep(15000);
+            get_proc_info(child_pid, &proc_info);
+            time_usage = max(time_usage, proc_info.utime);
+            memory_usage = max(memory_usage, proc_info.rss);
+
+            usleep(SLEEP_INTERVAL);
             // wait for the child process to change state
             pid2 = wait4(child_pid, &status, WNOHANG, &resource_usage);
         } while (pid2 == 0);
@@ -133,7 +158,9 @@ void run(struct config *_config, struct result *_result) {
 
         _result->exit_code = WEXITSTATUS(status);
         _result->cpu_time = (int) (resource_usage.ru_utime.tv_sec * 1000 + resource_usage.ru_utime.tv_usec / 1000);
-        _result->memory = (int) ((resource_usage.ru_stime.tv_sec * 1000 + resource_usage.ru_stime.tv_usec / 1000) * 1000);
+        // _result->cpu_time = time_usage * JIFFIES;
+        _result->memory = memory_usage * PAGESIZE;
+        // printf("%d %ld\n", _result->cpu_time, _result->memory);
 
         // get end time
         gettimeofday(&end, NULL);

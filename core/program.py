@@ -1,4 +1,5 @@
 import _judger
+import shutil
 from config import *
 from .languages import LANGUAGE_SETTINGS
 from .utils import read_partial_data_from_file
@@ -42,9 +43,6 @@ class Program(object):
         ).split(' ')
 
         # Running related
-        self.input_path = os.path.join(self.run_dir, 'in')
-        self.output_path = os.path.join(self.run_dir, 'out')
-        self.log_path = os.path.join(self.run_dir, 'run.log')
         self.seccomp_rule_name = self.language_settings['seccomp_rule']
         self.run_cmd = self.language_settings['exe_cmd'].format(
             exe_path=self.exe_path,
@@ -73,16 +71,11 @@ class Program(object):
             response['message'] = 'N/A'
         return response
 
-    def run(self):
+    def run(self, input_path, output_path, log_path):
         # Prevent input errors
-        if not os.path.exists(self.input_path):
-            open(self.input_path, "w").close()
-        result = self._run()
-
-        # Case java: time -= 150, memory N/A (currently)
-        if self.lang == 'java':
-            result['memory'] = 0
-            result['cpu_time'] = max(result['cpu_time'] - 150, 0)
+        if not os.path.exists(input_path):
+            open(input_path, "w").close()
+        result = _judger.run(**self._run_args(input_path, output_path, log_path))
 
         # A fake time limit / memory limit exceeded
         if result['cpu_time'] > self.settings.max_time or result['result'] == CPU_TIME_LIMIT_EXCEEDED \
@@ -98,10 +91,6 @@ class Program(object):
     def _compile(self):
         # return _celery_judger_run(self._compile_args())
         return _celery_judger_run.delay(self._compile_args()).get()
-
-    def _run(self):
-        # return _celery_judger_run(self._run_args())
-        return _celery_judger_run.delay(self._run_args()).get()
 
     def _compile_args(self):
         return dict(
@@ -123,7 +112,7 @@ class Program(object):
             gid=COMPILER_GROUP_GID
         )
 
-    def _run_args(self):
+    def _run_args(self, input_path, output_path, log_path):
         return dict(
             max_cpu_time=self.settings.max_time,
             max_real_time=self.settings.max_time * 3,
@@ -131,12 +120,12 @@ class Program(object):
             max_output_size=128 * 1024 * 1024,
             max_process_number=_judger.UNLIMITED,
             exe_path=self.run_cmd[0],
-            input_path=self.input_path,
-            output_path=self.output_path,
-            error_path=self.log_path,
+            input_path=input_path,
+            output_path=output_path,
+            error_path=log_path,
             args=self.run_cmd[1:],
             env=["PATH=" + os.getenv("PATH")] + self.language_settings['env'],
-            log_path=self.log_path,
+            log_path=log_path,
             seccomp_rule_name=self.seccomp_rule_name,
             uid=RUN_USER_UID,
             gid=RUN_GROUP_GID

@@ -1,11 +1,43 @@
 import shutil
 import os
-from random import Random
+import time
 from .program import Program
 from .judge import Judge
 from .settings import RoundSettings
 from .utils import *
 from config import *
+from celery import group
+from .utils import random_string
+
+
+@celery.task
+def run_test(config_data, round_id, count, key, val):
+    try:
+        settings = RoundSettings(config_data['settings'], round_id)
+        program = Program(config_data['code'], config_data['lang'], settings)
+        judge = Judge(config_data['judge'], settings, initial=False)
+        input_path = os.path.join(settings.data_dir, key)
+        output_path = os.path.join(settings.round_dir, random_string(32))
+        ans_path = os.path.join(settings.data_dir, val)
+        log_path = os.path.join(settings.round_dir, random_string(32))
+
+        running_result = program.run(input_path, output_path, log_path)
+
+        verdict = running_result['result']
+        if verdict == 0:
+            checker_exit_code = judge.run(input_path, output_path, ans_path)
+            if checker_exit_code != 0:
+                verdict = WRONG_ANSWER
+
+        return dict(
+            count=count,
+            time=running_result['cpu_time'],
+            memory=running_result['memory'] // 1024,
+            verdict=verdict
+        )
+    except Exception as e:
+        print(repr(e))
+        return dict(count=count, time=0, memory=0, verdict=SYSTEM_ERROR)
 
 
 class Handler(object):
@@ -23,6 +55,7 @@ class Handler(object):
         # Handling a not complete data?
         # Therefore we are checking them first
         # If any of these failed, the exception will be caught outside.
+        self.config_data = data
         self.id = data['id']
         self.code = data['code']
         self.lang = data['lang']
@@ -40,55 +73,24 @@ class Handler(object):
             return response
 
         data_set = import_data(self.settings.data_dir)
-        detail = []
-        test_num, sum_time, sum_memory, sum_verdict, accept_case_num = 0, 0, 0, ACCEPTED, 0
 
-        for key, val in data_set:
-            self.transfer_data(key, val)
-            test_num += 1
+        run_group = group(run_test.s(self.config_data, self.settings.round_id, idx, key, val)
+                          for idx, (key, val) in enumerate(data_set, start=1))
+        promise = run_group()
+        detail = promise.get()
+        detail = sorted(detail, key=lambda x: x.get('count'))
 
-            running_result = self.program.run()
-
-            verdict = running_result['result']
-            if verdict == 0:
-                checker_exit_code = self.judge.run()
-                if checker_exit_code != 0:
-                    verdict = WRONG_ANSWER
-
-            log_info = dict(
-                count=test_num,
-                time=running_result['cpu_time'],
-                memory=running_result['memory'] // 1024,
-                verdict=verdict
-            )
-            detail.append(log_info)
-
-            sum_time += log_info['time']
-            sum_memory = max(sum_memory, log_info['memory'])
-
-            if verdict == ACCEPTED:
-                accept_case_num += 1
-            else:
-                sum_verdict = max(verdict, sum_verdict) if verdict > 0 else verdict
-            if sum_time > self.settings.max_sum_time:
-                sum_verdict = SUM_TIME_LIMIT_EXCEEDED
-                break
+        sum_time = max(x.get('time', 0) for x in detail)
+        sum_memory = max(x.get('memory', 0) for x in detail)
+        wrong_cases = list(filter(lambda x: x.get('verdict', WRONG_ANSWER) != ACCEPTED, detail))
+        sum_verdict = ACCEPTED
+        if wrong_cases:
+            sum_verdict = max(x.get('verdict', WRONG_ANSWER) for x in wrong_cases)
+        accept_case_num = len(detail) - len(wrong_cases)
 
         response.update({'verdict': sum_verdict, 'time': sum_time, 'memory': sum_memory, 'detail': detail})
 
-        if len(data_set) > 0:
-            response['score'] = int(accept_case_num / len(data_set) * 100)
+        if len(detail) > 0:
+            response['score'] = int(accept_case_num / len(detail) * 100)
 
         return response
-
-    def transfer_data(self, input_file, ans_file):
-        """
-        :param input_file: filename, directory not included
-        :param ans_file: filename
-        :return: copy file to round directory and return nothing
-        """
-        shutil.copyfile(os.path.join(self.settings.data_dir, input_file), self.settings.input_path)
-        shutil.copyfile(os.path.join(self.settings.data_dir, ans_file), self.settings.ans_path)
-        os.chmod(self.settings.input_path, 0o400)
-        os.chmod(self.settings.ans_path, 0o400)
-        

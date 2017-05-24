@@ -10,4 +10,5 @@ core=$(grep --count ^processor /proc/cpuinfo)
 n=$(($core*2))
 redis-server &
 celery worker -A config.celery &
+# python3 server.py
 gunicorn server:app --workers $n --worker-connections 1000 --error-logfile /var/log/gunicorn.log --timeout 3600 --graceful-timeout 3600 --worker-class gevent --bind 0.0.0.0:4999

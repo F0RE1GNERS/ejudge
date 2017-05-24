@@ -19,9 +19,6 @@ class RoundSettings:
         self.round_id = round_id
         self.data_dir = os.path.join(DATA_DIR, str(self.problem_id))
         self.round_dir = os.path.join(ROUND_DIR, str(self.round_id))
-        self.input_path = os.path.join(self.round_dir, 'in')
-        self.output_path = os.path.join(self.round_dir, 'out')
-        self.ans_path = os.path.join(self.round_dir, 'ans')
 
         # OS init
         if not os.path.exists(self.data_dir):
