@@ -1,6 +1,7 @@
 from os import path
 import requests
 import time
+import json
 
 TOKEN = 'naive'
 URL = 'http://127.0.0.1:4999/'
@@ -52,12 +53,14 @@ def judge(data_name, source_name, max_time=1000, max_sum_time=10000, max_memory=
     print('Judge result:', result)
     end_time = time.time()
     print('Time elapsed:', end_time - start_time)
-
+    return result
 
 if __name__ == '__main__':
     # judge('string', 'string_fast.cpp', max_time=3000, max_sum_time=0)
     # judge('a+b', 'a+b_wa.cpp', max_time=3000, max_sum_time=0)
     # judge('a+b', 'a+b_ce.cpp', max_time=3000, max_sum_time=0)
-    judge('a+b', 'a+b.java', max_time=1000)
-    # judge('string', 'string_slow.cpp', max_time=3000, max_sum_time=0)
+    # judge('a+b', 'a+b.java', max_time=1000)
+    res1 = judge('string', 'string_slow.cpp', max_time=3000, max_sum_time=0)
+    res2 = judge('string2', 'string_slow.cpp', max_time=3000, max_sum_time=0)
+    print(list(filter(lambda x: x.get('count') == 13, res1['detail']))[0], res2['detail'][0])
     # judge('string', 'string_hash.cpp', max_time=6000, max_sum_time=0)

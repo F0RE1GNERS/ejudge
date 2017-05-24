@@ -80,7 +80,7 @@ class Handler(object):
         detail = promise.get()
         detail = sorted(detail, key=lambda x: x.get('count'))
 
-        sum_time = sum(x.get('time', 0) for x in detail)
+        sum_time = max(x.get('time', 0) for x in detail)
         sum_memory = max(x.get('memory', 0) for x in detail)
         wrong_cases = list(filter(lambda x: x.get('verdict', WRONG_ANSWER) != ACCEPTED, detail))
         sum_verdict = ACCEPTED
