@@ -12,9 +12,20 @@ UPLOAD_URL = URL + 'upload/%d' % PROBLEM_ID
 JUDGE_URL = URL + 'judge'
 LANG_SET = [
     ('.c', 'c'),
+    ('.c11', 'c11'),
+    ('.cpp98', 'cpp98'),
     ('.cpp', 'cpp'),
+    ('.cpp14', 'cpp14'),
+    ('.cs', 'csharp'),
     ('.java', 'java'),
-    ('.py', 'python')
+    ('.py', 'python'),
+    ('.py2', 'python2'),
+    ('.php', 'php'),
+    ('.f', 'fortran'),
+    ('.pl', 'perl'),
+    ('.rb', 'ruby'),
+    ('.m', 'objc'),
+
 ]
 
 
