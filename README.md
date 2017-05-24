@@ -6,6 +6,42 @@
 
 and run it by `sudo docker run -it -p 4999:4999 ...`
 
+### Features
+
+#### Support Language List
+
++ C (c)
++ C11 (c11)
++ C++ (cpp98)
++ C++11 (cpp)
++ C++14 (cpp14)
++ C# (csharp)
++ Python 2 (python2)
++ Python 3 (python)
++ Java 8 (java)
++ PHP 7 (php)
++ Fortran (fortran)
++ Perl (perl)
++ Ruby (ruby)
++ Objective-C (objc)
++ Haskell (haskell)
++ Scala (scala)
++ Clojure (clojure)
++ Lua (lua)
++ Common Lisp (lisp)
++ Erlang (erlang)
++ Javascript (js)
++ Go (go)
++ Groovy (groovy)
++ OCaml (ocaml)
++ F# (fsharp)
++ PyPy (pypy2)
++ PyPy 3 (pypy)
++ Swift (swift)
++ Pascal (pascal)
++ Rust (rust)
++ R (r)
+
 
 ### Installation:
 
