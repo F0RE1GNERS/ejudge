@@ -251,8 +251,8 @@ LANGUAGE_SETTINGS = {
         "seccomp_rule": "general",
     },
     'scala': {
-        "src_name": "main.scala",
-        "exe_name": "main",
+        "src_name": "Main.scala",
+        "exe_name": "Main",
         "max_memory": MAX_MEMORY,
         "compile_cmd": "/usr/bin/scalac {src_path} -encoding UTF8",
         "exe_cmd": "/usr/bin/scala -cp {exe_dir} -J-Xss1M -J-Xms16M -J-Xmx{max_memory}M {exe_name}",
@@ -267,5 +267,11 @@ LANGUAGE_SETTINGS = {
         "env": [] + _DEFAULT_ENV,
         "max_memory": MAX_MEMORY,
         "seccomp_rule": "general",
-    }
+    },
+    'go': {
+        "src_name": "main.go",
+        "exe_name": "main",
+        "compile_cmd": "usr/bin/go build -o {exe_path} {src_path}",
+        "exe_cmd": "{exe_path}",
+    },
 }

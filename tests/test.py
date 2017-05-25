@@ -25,7 +25,19 @@ LANG_SET = [
     ('.pl', 'perl'),
     ('.rb', 'ruby'),
     ('.m', 'objc'),
-
+    ('.fs', 'fsharp'),
+    ('.js', 'js'),
+    ('.ml', 'ocaml'),
+    ('.pas', 'pascal'),
+    ('.pypy', 'pypy2'),
+    ('.R', 'r'),
+    ('.rs', 'rust'),
+    ('.scala', 'scala'),
+    ('.swift', 'swift'),
+    ('.go', 'go'),
+    ('.lua', 'lua'),
+    ('.lisp', 'lisp'),
+    ('.hs', 'haskell'),
 ]
 
 
