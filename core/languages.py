@@ -150,4 +150,25 @@ LANGUAGE_SETTINGS = {
         "env": [] + _DEFAULT_ENV
     },
 
+    # Haskell
+    'haskell': {
+        "src_name": "main.hs",
+        "exe_name": "main",
+        "max_memory": MAX_MEMORY,
+        "compile_cmd": "/usr/bin/ghc --make -O {src_path}",
+        "exe_cmd": "{exe_path}",
+        "seccomp_rule": "general",
+        "env": [] + _DEFAULT_ENV
+    },
+
+    # Scala TODO: might be unusable
+    'scala': {
+        "src_name": "Main.scala",
+        "exe_name": "Main",
+        "max_memory": MAX_MEMORY,
+        "compile_cmd": "/usr/bin/scalac {src_path}",
+        "exe_cmd": "/usr/bin/scala {exe_path}",
+        "seccomp_rule": "general",
+        "env": [] + _DEFAULT_ENV
+    }
 }
