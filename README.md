@@ -26,7 +26,6 @@ and run it by `sudo docker run -it -p 4999:4999 ...`
 + Objective-C (objc)
 + Haskell (haskell)
 + Scala (scala)
-+ Clojure (clojure)
 + Lua (lua)
 + Common Lisp (lisp)
 + Erlang (erlang)

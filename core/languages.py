@@ -170,5 +170,28 @@ LANGUAGE_SETTINGS = {
         "exe_cmd": "/usr/bin/scala {exe_path}",
         "seccomp_rule": "general",
         "env": [] + _DEFAULT_ENV
+    },
+
+    # Lua
+    'lua': {
+        "src_name": "main.lua",
+        "exe_name": "main.lua",
+        "max_memory": MAX_MEMORY,
+        "compile_cmd": "/usr/bin/lua5.3 {src_path}",
+        "exe_cmd": "/usr/bin/lua5.3 {exe_path}",
+        "seccomp_rule": "general",
+        "env": [] + _DEFAULT_ENV
+    },
+
+    'lisp': {
+        "src_name": "main.lisp",
+        "exe_name": "main.lisp",
+        "max_memory": MAX_MEMORY,
+        "compile_cmd": "/usr/bin/clisp --version",
+        "exe_cmd": "/usr/bin/clisp {exe_path}",
+        "seccomp_rule": "general",
+        "env": [] + _DEFAULT_ENV
     }
+
+
 }
