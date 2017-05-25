@@ -1,6 +1,12 @@
 _DEFAULT_ENV = ["LANG=en_US.UTF-8", "LANGUAGE=en_US:en", "LC_ALL=en_US.UTF-8"]
 MAX_MEMORY = 128 * 1024 * 1024
 
+
+
+
+
+
+
 LANGUAGE_SETTINGS = {
 
     # C/C++
@@ -154,22 +160,11 @@ LANGUAGE_SETTINGS = {
     'haskell': {
         "src_name": "main.hs",
         "exe_name": "main",
-        "max_memory": MAX_MEMORY,
         "compile_cmd": "/usr/bin/ghc --make -O {src_path}",
         "exe_cmd": "{exe_path}",
         "seccomp_rule": "general",
-        "env": [] + _DEFAULT_ENV
-    },
-
-    # Scala TODO: might be unusable
-    'scala': {
-        "src_name": "Main.scala",
-        "exe_name": "Main",
+        "env": [] + _DEFAULT_ENV,
         "max_memory": MAX_MEMORY,
-        "compile_cmd": "/usr/bin/scalac {src_path}",
-        "exe_cmd": "/usr/bin/scala {exe_path}",
-        "seccomp_rule": "general",
-        "env": [] + _DEFAULT_ENV
     },
 
     # Lua
@@ -191,7 +186,86 @@ LANGUAGE_SETTINGS = {
         "exe_cmd": "/usr/bin/clisp {exe_path}",
         "seccomp_rule": "general",
         "env": [] + _DEFAULT_ENV
+    },
+    'r': {
+        "src_name": "solution.R",
+        "exe_name": "solution.R",
+        "compile_cmd": "/usr/bin/R --version",
+        "exe_cmd": "/usr/bin/Rscript {exe_path}",
+        "env": [] + _DEFAULT_ENV,
+        "max_memory": MAX_MEMORY,
+        "seccomp_rule": "general",
+    },
+    'rust': {
+        "src_name": "main.rs",
+        "exe_name": "main",
+        "compile_cmd": "/usr/bin/rustc -O {src_path} -o {exe_path}",
+        "exe_cmd": "{exe_path}",
+        "env": [] + _DEFAULT_ENV,
+        "max_memory": MAX_MEMORY,
+        "seccomp_rule": "general",
+    },
+    'pascal': {
+        "src_name": "main.pas",
+        "exe_name": "main",
+        "compile_cmd": "/usr/bin/fpc -O2 -Sgic -dONLINE_JUDGE  -Mdelphi {src_path} -o {exe_path}",
+        "exe_cmd": "{exe_path}",
+        "env": [] + _DEFAULT_ENV,
+        "max_memory": MAX_MEMORY,
+        "seccomp_rule": "general",
+    },
+    'swift': {
+        "src_name": "main.swift",
+        "exe_name": "main",
+        "compile_cmd": "/usr/bin/swiftc -O {src_path} -o {exe_path}",
+        "exe_cmd": "{exe_path}",
+        "env": [] + _DEFAULT_ENV,
+        "max_memory": MAX_MEMORY,
+        "seccomp_rule": "general",
+    },
+    'pypy2': {
+        "src_name": "solution.py",
+        "exe_name": "__pycache__/solution.pypy-41.pyc",
+        "compile_cmd": "/usr/bin/pypy -m py_compile {src_path}",
+        "exe_cmd": "/usr/bin/pypy {exe_path}",
+        "env": [] + _DEFAULT_ENV,
+        "max_memory": MAX_MEMORY,
+        "seccomp_rule": "general",
+    },
+    'fsharp': {
+        "src_name": "main.fs",
+        "exe_name": "main.exe",
+        "compile_cmd": "/usr/bin/fsharpc -d ONLINE_JUDGE -O -o {exe_path} {src_path}",
+        "exe_cmd": "/usr/bin/mono {exe_path}",
+        "env": [] + _DEFAULT_ENV,
+        "max_memory": MAX_MEMORY,
+        "seccomp_rule": "general",
+    },
+    'ocaml': {
+        "src_name": "main.ml",
+        "exe_name": "main",
+        "compile_cmd": "/usr/bin/ocamlc {src_path} -o {exe_path}",
+        "exe_cmd": "{exe_path}",
+        "env": [] + _DEFAULT_ENV,
+        "max_memory": MAX_MEMORY,
+        "seccomp_rule": "general",
+    },
+    'scala': {
+        "src_name": "main.scala",
+        "exe_name": "main",
+        "max_memory": MAX_MEMORY,
+        "compile_cmd": "/usr/bin/scalac {src_path} -encoding UTF8",
+        "exe_cmd": "/usr/bin/scala -cp {exe_dir} -J-Xss1M -J-Xms16M -J-Xmx{max_memory}M {exe_name}",
+        "env": [] + _DEFAULT_ENV,
+        "seccomp_rule": "general",
+    },
+    'js': {
+        "src_name": "solution.js",
+        "exe_name": "solution.js",
+        "compile_cmd": "/usr/bin/node -v",
+        "exe_cmd": "/usr/bin/node {exe_path}",
+        "env": [] + _DEFAULT_ENV,
+        "max_memory": MAX_MEMORY,
+        "seccomp_rule": "general",
     }
-
-
 }
