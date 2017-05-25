@@ -71,7 +71,11 @@ if __name__ == '__main__':
     # judge('a+b', 'a+b_wa.cpp', max_time=3000, max_sum_time=0)
     # judge('a+b', 'a+b_ce.cpp', max_time=3000, max_sum_time=0)
     # judge('a+b', 'a+b.java', max_time=1000)
-    res1 = judge('string', 'string_slow.cpp', max_time=3000, max_sum_time=0)
-    res2 = judge('string2', 'string_slow.cpp', max_time=3000, max_sum_time=0)
-    print(list(filter(lambda x: x.get('count') == 13, res1['detail']))[0], res2['detail'][0])
+    # res1 = judge('string', 'string_slow.cpp', max_time=3000, max_sum_time=0)
+    # res2 = judge('string2', 'string_slow.cpp', max_time=3000, max_sum_time=0)
+    # print(list(filter(lambda x: x.get('count') == 13, res1['detail']))[0], res2['detail'][0])
     # judge('string', 'string_hash.cpp', max_time=6000, max_sum_time=0)
+    import os
+    for file in os.listdir('test_src'):
+        if file.startswith('aplusb'):
+            judge('aplusb', file)
