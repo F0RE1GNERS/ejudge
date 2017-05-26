@@ -19,11 +19,3 @@ class RoundSettings:
         self.round_id = round_id
         self.data_dir = os.path.join(DATA_DIR, str(self.problem_id))
         self.round_dir = os.path.join(ROUND_DIR, str(self.round_id))
-
-        # OS init
-        if not os.path.exists(self.data_dir):
-            raise FileNotFoundError
-        if not os.path.exists(self.round_dir):
-            os.mkdir(self.round_dir)
-
-        os.chown(self.round_dir, COMPILER_USER_UID, COMPILER_GROUP_GID)

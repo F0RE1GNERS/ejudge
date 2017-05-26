@@ -1,10 +1,7 @@
 _DEFAULT_ENV = ["LANG=en_US.UTF-8", "LANGUAGE=en_US:en", "LC_ALL=en_US.UTF-8"]
+_DEFAULT_ENV += ["PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"]
+_DEFAULT_ENV += ["HOME=/root"]
 MAX_MEMORY = 128 * 1024 * 1024
-
-
-
-
-
 
 
 LANGUAGE_SETTINGS = {
@@ -73,7 +70,7 @@ LANGUAGE_SETTINGS = {
         "exe_name": "Main",
         "max_memory": -1,
         "compile_cmd": "/usr/bin/javac {src_path} -encoding UTF8",
-        "exe_cmd": "/usr/bin/java -cp {exe_dir} -Xss1M -XX:MaxPermSize=16M -XX:PermSize=8M -Xms16M -Xmx{max_memory}M "
+        "exe_cmd": "/usr/bin/java -cp {exe_dir} -Xss1M -Xms16M -Xmx{max_memory}M "
                    "-Djava.security.manager -Dfile.encoding=UTF-8 -Djava.security.policy==/etc/java_policy "
                    "-Djava.awt.headless=true {exe_name}",
         "seccomp_rule": None,
@@ -149,8 +146,12 @@ LANGUAGE_SETTINGS = {
         "src_name": "main.m",
         "exe_name": "main",
         "max_memory": MAX_MEMORY,
-        "compile_cmd": "/usr/bin/gcc -DONLINE_JUDGE -O2 {src_path} -lm -o {exe_path} `gnustep-config --objc-flags` "
-                       "`gnustep-config --base-libs`",
+        "compile_cmd": "/usr/bin/gcc -DONLINE_JUDGE -O2 {src_path} -lm -o {exe_path} "
+                       "-MMD -MP -DGNUSTEP -DGNUSTEP_BASE_LIBRARY=1 -DGNU_GUI_LIBRARY=1 -DGNU_RUNTIME=1 "
+                       "-DGNUSTEP_BASE_LIBRARY=1 -fno-strict-aliasing -fexceptions -fobjc-exceptions "
+                       "-D_NATIVE_OBJC_EXCEPTIONS -pthread -fPIC -Wall -DGSWARN -DGSDIAGNOSE -Wno-import "
+                       "-fgnu-runtime -fconstant-string-class=NSConstantString -I. -I/usr/local/include/GNUstep "
+                       "-I/usr/include/GNUstep -rdynamic -shared-libgcc -L/usr/local/lib -L/usr/lib -lgnustep-base -lobjc",
         "exe_cmd": "{exe_path}",
         "seccomp_rule": "general",
         "env": [] + _DEFAULT_ENV
@@ -172,7 +173,7 @@ LANGUAGE_SETTINGS = {
         "src_name": "main.lua",
         "exe_name": "main.lua",
         "max_memory": MAX_MEMORY,
-        "compile_cmd": "/usr/bin/lua5.3 {src_path}",
+        "compile_cmd": "/usr/bin/lua5.3 -v",
         "exe_cmd": "/usr/bin/lua5.3 {exe_path}",
         "seccomp_rule": "general",
         "env": [] + _DEFAULT_ENV
@@ -180,10 +181,10 @@ LANGUAGE_SETTINGS = {
 
     'lisp': {
         "src_name": "main.lisp",
-        "exe_name": "main.lisp",
+        "exe_name": "main",
         "max_memory": MAX_MEMORY,
-        "compile_cmd": "/usr/bin/clisp --version",
-        "exe_cmd": "/usr/bin/clisp {exe_path}",
+        "compile_cmd": "/usr/bin/clisp -c {src_path} -o {exe_path}",
+        "exe_cmd": "{exe_path}",
         "seccomp_rule": "general",
         "env": [] + _DEFAULT_ENV
     },
@@ -208,7 +209,7 @@ LANGUAGE_SETTINGS = {
     'pascal': {
         "src_name": "main.pas",
         "exe_name": "main",
-        "compile_cmd": "/usr/bin/fpc -O2 -Sgic -dONLINE_JUDGE  -Mdelphi {src_path} -o {exe_path}",
+        "compile_cmd": "/usr/bin/fpc -O2 -Sgic -dONLINE_JUDGE -Mdelphi {src_path} -o{exe_path}",
         "exe_cmd": "{exe_path}",
         "env": [] + _DEFAULT_ENV,
         "max_memory": MAX_MEMORY,
@@ -253,8 +254,8 @@ LANGUAGE_SETTINGS = {
     'scala': {
         "src_name": "Main.scala",
         "exe_name": "Main",
-        "max_memory": MAX_MEMORY,
-        "compile_cmd": "/usr/bin/scalac {src_path} -encoding UTF8",
+        "max_memory": -1,
+        "compile_cmd": "/usr/bin/scalac -d {exe_dir} -encoding UTF8 -target:jvm-1.8 -optimise {src_path}",
         "exe_cmd": "/usr/bin/scala -cp {exe_dir} -J-Xss1M -J-Xms16M -J-Xmx{max_memory}M {exe_name}",
         "env": [] + _DEFAULT_ENV,
         "seccomp_rule": "general",
@@ -273,5 +274,8 @@ LANGUAGE_SETTINGS = {
         "exe_name": "main",
         "compile_cmd": "usr/bin/go build -o {exe_path} {src_path}",
         "exe_cmd": "{exe_path}",
+        "env": [] + _DEFAULT_ENV,
+        "max_memory": MAX_MEMORY,
+        "seccomp_rule": "general",
     },
 }

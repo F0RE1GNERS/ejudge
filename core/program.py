@@ -37,10 +37,19 @@ class Program(object):
         # Compilation related
         self.compile_out_path = os.path.join(self.run_dir, 'compile.out')
         self.compile_log_path = os.path.join(self.run_dir, 'compile.log')
-        self.compile_cmd = self.language_settings['compile_cmd'].format(
-            src_path=self.src_path,
-            exe_path=self.exe_path,
-        ).split(' ')
+        if type(self.language_settings['compile_cmd']).__name__ == 'str':
+            self.compile_cmd = self.language_settings['compile_cmd'].format(
+                src_path=self.src_path,
+                exe_path=self.exe_path,
+            ).split(' ')
+        else:
+            self.compile_cmd = self.language_settings['compile_cmd'].copy()
+            for i, s, in enumerate(self.compile_cmd):
+                if s == '{src_path}':
+                    self.compile_cmd[i] = self.src_path
+                elif s == '{exe_path}':
+                    self.compile_cmd[i] = self.exe_path
+
 
         # Running related
         self.seccomp_rule_name = self.language_settings['seccomp_rule']
@@ -94,8 +103,8 @@ class Program(object):
 
     def _compile_args(self):
         return dict(
-            max_cpu_time=5000,
-            max_real_time=10000,
+            max_cpu_time=15000,
+            max_real_time=30000,
             max_memory=-1,
             max_output_size=128 * 1024 * 1024,
             max_process_number=_judger.UNLIMITED,
@@ -108,8 +117,8 @@ class Program(object):
             env=["PATH=" + os.getenv("PATH")] + self.language_settings['env'],
             log_path=self.compile_log_path,
             seccomp_rule_name=None,
-            uid=COMPILER_USER_UID,  # not safe?
-            gid=COMPILER_GROUP_GID
+            uid=COMPILER_GROUP_GID,  # not safe?
+            gid=COMPILER_USER_UID
         )
 
     def _run_args(self, input_path, output_path, log_path):
@@ -126,7 +135,7 @@ class Program(object):
             args=self.run_cmd[1:],
             env=["PATH=" + os.getenv("PATH")] + self.language_settings['env'],
             log_path=log_path,
-            seccomp_rule_name=self.seccomp_rule_name,
-            uid=RUN_USER_UID,
-            gid=RUN_GROUP_GID
+            seccomp_rule_name=None,
+            uid=0,
+            gid=0
         )

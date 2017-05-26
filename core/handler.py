@@ -60,6 +60,15 @@ class Handler(object):
         self.code = data['code']
         self.lang = data['lang']
         self.settings = RoundSettings(data['settings'], round_id)
+
+        # OS init
+        if not os.path.exists(self.settings.data_dir):
+            raise FileNotFoundError('Data file not found.')
+        if not os.path.exists(self.settings.round_dir):
+            os.mkdir(self.settings.round_dir)
+
+        os.chown(self.settings.round_dir, COMPILER_USER_UID, COMPILER_GROUP_GID)
+
         self.program = Program(self.code, self.lang, self.settings)
         self.judge = Judge(data['judge'], self.settings)
 

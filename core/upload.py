@@ -3,8 +3,7 @@ import shutil
 import zipfile
 
 
-@celery.task
-def _celery_upload(pid, source_path):
+def upload_data(pid, source_path):
     try:
         target_dir = os.path.join(DATA_DIR, pid)
         if os.path.exists(target_dir):
@@ -20,7 +19,3 @@ def _celery_upload(pid, source_path):
     except Exception as e:
         print(e)
         return False
-
-
-def upload_data(pid, source_path):
-    return _celery_upload.delay(pid, source_path).get()

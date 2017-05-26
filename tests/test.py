@@ -56,9 +56,9 @@ def judge(data_name, source_name, max_time=1000, max_sum_time=10000, max_memory=
 
     with open(data_name, 'rb') as f:
         result = requests.post(UPLOAD_URL, data=f.read(), auth=('token', TOKEN)).json()
-        print('Uploading result:', result)
+        # print('Uploading result:', result)
         if not result['status'] == 'received':
-            raise ConnectionError('Remote server reject the request')
+            raise ConnectionError('Remote server reject the request.', result)
     start_time = time.time()
     data = {
         "id": 1,
@@ -73,9 +73,11 @@ def judge(data_name, source_name, max_time=1000, max_sum_time=10000, max_memory=
         "judge": judge,
     }
     result = requests.post(JUDGE_URL, json=data, auth=('token', TOKEN)).json()
-    print('Judge result:', result)
+    if result.get('verdict') in [6, 4]:
+        print('Judge result:', source_name, result.get('verdict'))
+        print(result)
     end_time = time.time()
-    print('Time elapsed:', end_time - start_time)
+    # print('Time elapsed:', end_time - start_time)
     return result
 
 if __name__ == '__main__':
@@ -90,4 +92,8 @@ if __name__ == '__main__':
     import os
     for file in os.listdir('test_src'):
         if file.startswith('aplusb'):
-            judge('aplusb', file)
+            try:
+                print(file)
+                judge('aplusb', file)
+            except Exception as e:
+                print(repr(e))
