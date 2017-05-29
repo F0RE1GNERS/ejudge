@@ -38,10 +38,10 @@ SUM_TIME_LIMIT_EXCEEDED = 8
 
 
 app = Flask(__name__)
-app.config['CELERY_BROKER_URL'] = 'redis://localhost:6379/0'
-app.config['CELERY_RESULT_BACKEND'] = 'redis://localhost:6379/0'
-app.config['CELERY_IMPORTS'] = ['core.program', 'core.upload', 'core.handler']
-# app.config['CELERY_ACCEPT_CONTENT'] = ['json', 'pickle'] UNSAFE!
+app.config['broker_url'] = 'redis://localhost:6379/0'
+app.config['result_backend'] = 'redis://localhost:6379/0'
+app.config['imports'] = ['core.program', 'core.upload', 'core.handler']
+app.config['worker_concurrency'] = max(os.cpu_count() // 2, 1)
 
-celery = Celery(app.name, broker=app.config['CELERY_BROKER_URL'])
+celery = Celery(app.name, broker=app.config['broker_url'])
 celery.conf.update(app.config)
