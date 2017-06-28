@@ -12,7 +12,7 @@ RUN apt-get -y install software-properties-common python-software-properties pyt
     locales python3-software-properties python3 python3-dev python3-pip \
     gcc g++ git libtool python-pip libseccomp-dev cmake openjdk-8-jdk nginx redis-server \
     mono-devel php gfortran perl ruby-full gobjc gnustep gnustep-devel ghc scala lua5.3 sbcl nodejs nodejs-legacy \
-    r-base rustc fp-compiler clang pypy mono-complete fsharp ocaml-nox golang-go wget
+    r-base rustc fp-compiler clang pypy mono-complete fsharp ocaml-nox golang-go wget sbcl
 
 RUN wget https://swift.org/builds/swift-3.1.1-release/ubuntu1604/swift-3.1.1-RELEASE/swift-3.1.1-RELEASE-ubuntu16.04.tar.gz
 RUN tar zxf swift-*.tar.gz && chmod -R ugo+r swift-3.1.1-RELEASE-ubuntu16.04

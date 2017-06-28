@@ -117,15 +117,19 @@ class Program(object):
             env=["PATH=" + os.getenv("PATH")] + self.language_settings['env'],
             log_path=self.compile_log_path,
             seccomp_rule_name=None,
-            uid=COMPILER_GROUP_GID,  # not safe?
-            gid=COMPILER_USER_UID
+            uid=COMPILER_USER_UID,  # not safe?
+            gid=COMPILER_GROUP_GID,
         )
 
     def _run_args(self, input_path, output_path, log_path):
+        if self.lang == 'java' or self.lang == 'js' or self.lang == 'lisp':
+            max_memory = -1
+        else:
+            max_memory = self.settings.max_memory * 1048576
         return dict(
             max_cpu_time=self.settings.max_time,
             max_real_time=self.settings.max_time * 3,
-            max_memory=self.settings.max_memory * 1048576 if self.lang != 'java' else -1,
+            max_memory=max_memory,
             max_output_size=128 * 1024 * 1024,
             max_process_number=_judger.UNLIMITED,
             exe_path=self.run_cmd[0],
@@ -137,5 +141,5 @@ class Program(object):
             log_path=log_path,
             seccomp_rule_name=None,
             uid=0,
-            gid=0
+            gid=0,
         )

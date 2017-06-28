@@ -7,37 +7,46 @@ from .settings import RoundSettings
 from .utils import *
 from config import *
 from celery import group
+from celery.utils.log import get_task_logger
 from .utils import random_string
+
+logger = get_task_logger(__name__)
 
 
 @celery.task
 def run_test(config_data, round_id, count, key, val):
-    try:
-        settings = RoundSettings(config_data['settings'], round_id)
-        program = Program(config_data['code'], config_data['lang'], settings)
-        judge = Judge(config_data['judge'], settings, initial=False)
-        input_path = os.path.join(settings.data_dir, key)
-        output_path = os.path.join(settings.round_dir, random_string(32))
-        ans_path = os.path.join(settings.data_dir, val)
-        log_path = os.path.join(settings.round_dir, random_string(32))
+    settings = RoundSettings(config_data['settings'], round_id)
+    program = Program(config_data['code'], config_data['lang'], settings)
+    judge = Judge(config_data['judge'], settings)
 
-        running_result = program.run(input_path, output_path, log_path)
+    input_path = os.path.join(settings.data_dir, key)
+    output_path = os.path.join(settings.round_dir, random_string(32))
+    ans_path = os.path.join(settings.data_dir, val)
+    log_path = os.path.join(settings.round_dir, random_string(32))
 
-        verdict = running_result['result']
-        if verdict == 0:
-            checker_exit_code = judge.run(input_path, output_path, ans_path)
-            if checker_exit_code != 0:
-                verdict = WRONG_ANSWER
+    running_result = program.run(input_path, output_path, log_path)
 
-        return dict(
-            count=count,
-            time=running_result['cpu_time'],
-            memory=running_result['memory'] // 1024,
-            verdict=verdict
-        )
-    except Exception as e:
-        print(repr(e))
-        return dict(count=count, time=0, memory=0, verdict=SYSTEM_ERROR)
+    # try:
+    #     with open(log_path, 'r') as f:
+    #         print(f.read())
+    # except:
+    #     pass
+
+    verdict = running_result['result']
+    logger.warning('verdict:{0}'.format(verdict))
+    if verdict == 0:
+        checker_exit_code = judge.run(input_path, output_path, ans_path)
+        if checker_exit_code != 0:
+            verdict = WRONG_ANSWER
+            with open(output_path) as f, open(ans_path) as g:
+                logger.error('output:{0}, ans:{1}'.format(f.read().strip(), g.read().strip()))
+
+    return dict(
+        count=count,
+        time=running_result['cpu_time'],
+        memory=running_result['memory'] // 1024,
+        verdict=verdict
+    )
 
 
 class Handler(object):

@@ -73,7 +73,7 @@ def judge(data_name, source_name, max_time=1000, max_sum_time=10000, max_memory=
         "judge": judge,
     }
     result = requests.post(JUDGE_URL, json=data, auth=('token', TOKEN)).json()
-    if result.get('verdict') in [6, 4]:
+    if result.get('verdict') != 0:
         print('Judge result:', source_name, result.get('verdict'))
         print(result)
     end_time = time.time()
@@ -85,15 +85,17 @@ if __name__ == '__main__':
     # judge('a+b', 'a+b_wa.cpp', max_time=3000, max_sum_time=0)
     # judge('a+b', 'a+b_ce.cpp', max_time=3000, max_sum_time=0)
     # judge('a+b', 'a+b.java', max_time=1000)
-    # res1 = judge('string', 'string_slow.cpp', max_time=3000, max_sum_time=0)
+    res1 = judge('string', 'string_slow.cpp', max_time=3000, max_sum_time=0)
     # res2 = judge('string2', 'string_slow.cpp', max_time=3000, max_sum_time=0)
     # print(list(filter(lambda x: x.get('count') == 13, res1['detail']))[0], res2['detail'][0])
     # judge('string', 'string_hash.cpp', max_time=6000, max_sum_time=0)
-    import os
-    for file in os.listdir('test_src'):
-        if file.startswith('aplusb'):
-            try:
-                print(file)
-                judge('aplusb', file)
-            except Exception as e:
-                print(repr(e))
+    # import os
+    # for file in os.listdir('test_src'):
+    #     if file.startswith('aplusb'):
+    #         if file.endswith('.rs') or file.endswith('.hs') or file.endswith('.lisp'):
+    #             continue
+    #         try:
+    #             print(file)
+    #             judge('aplusb', file)
+    #         except Exception as e:
+    #             print(repr(e))

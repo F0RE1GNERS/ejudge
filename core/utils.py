@@ -53,7 +53,7 @@ def read_partial_data_from_file(filename, length=4096):
 
 
 def randomize_round_id():
-    return str(uuid.uuid1())
+    return random_string(64)
 
 
 def random_string(length):

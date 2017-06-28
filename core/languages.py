@@ -181,10 +181,11 @@ LANGUAGE_SETTINGS = {
 
     'lisp': {
         "src_name": "main.lisp",
-        "exe_name": "main",
+        "exe_name": "main.lisp",
         "max_memory": MAX_MEMORY,
-        "compile_cmd": "/usr/bin/clisp -c {src_path} -o {exe_path}",
-        "exe_cmd": "{exe_path}",
+        "compile_cmd": "/usr/bin/sbcl --version",
+        "exe_cmd": "/usr/bin/sbcl --dynamic-space-size {max_memory} --control-stack-size {max_memory} "
+                   "--quit --script {exe_path}",
         "seccomp_rule": "general",
         "env": [] + _DEFAULT_ENV
     },
@@ -263,8 +264,8 @@ LANGUAGE_SETTINGS = {
     'js': {
         "src_name": "solution.js",
         "exe_name": "solution.js",
-        "compile_cmd": "/usr/bin/node -v",
-        "exe_cmd": "/usr/bin/node {exe_path}",
+        "compile_cmd": "/usr/bin/node -c {src_path}",
+        "exe_cmd": "/usr/bin/node --no-deprecation --max_old_space_size={max_memory} {exe_path}",
         "env": [] + _DEFAULT_ENV,
         "max_memory": MAX_MEMORY,
         "seccomp_rule": "general",
