@@ -1,0 +1,84 @@
+c:
+  type: compiler
+  compiler_file: /usr/bin/gcc
+  compiler_args: -O2 -std=c99 -o {exe_path} {code_path} -DONLINE_JUDGE -lm -fmax-errors=3
+  code_file: foo.c
+  execute_file: "{exe_path}"
+cc11:
+  type: compiler
+  compiler_file: /usr/bin/g++
+  compiler_args: -O2 -std=c++11 -o {exe_path} {code_path} -DONLINE_JUDGE -lm -fmax-errors=3
+  code_file: foo.cc
+  execute_file: "{exe_path}"
+cc14:
+  type: compiler
+  compiler_file: /usr/bin/g++
+  compiler_args: -O2 -std=c++14 -o {exe_path} {code_path} -DONLINE_JUDGE -lm -fmax-errors=3
+  code_file: foo.cc
+  execute_file: "{exe_path}"
+cs:
+  type: compiler
+  compiler_file: /usr/bin/mcs
+  compiler_args: -define:ONLINE_JUDGE -o+ -out:{exe_path} {code_path}
+  code_file: foo.cs
+  object_file: foo.exe
+  execute_file: /usr/bin/mono
+  execute_args: "{exe_path}"
+  memory_flag: MB
+  seccomp_rule: csharp
+pas:
+  type: compiler
+  compiler_file: /usr/bin/fpc
+  compiler_args: -O2 -o{exe_path} {code_path}
+  code_file: foo.pas
+  execute_file: "{exe_path}"
+java:
+  type: compiler
+  compiler_file: /usr/bin/javac
+  compiler_args: -d {workspace} -encoding utf8 {code_path}
+  code_file: Main.java
+  execute_file: /usr/bin/java
+  execute_args: -cp {workspace} -Xss1M -XX:MaxPermSize=16M -XX:PermSize=8M -Xms16M -Xmx{max_memory}M -Djava.security.manager -Dfile.encoding=UTF-8 -Djava.awt.headless=true Main
+  execute_args_unsafe: -cp {workspace} Main
+  memory_flag: MB
+  seccomp_rule: java
+  env:
+    MALLOC_ARENA_MAX: "1"
+py2:
+  type: interpreter
+  code_file: "{code_path}"
+  execute_file: /usr/bin/python
+  execute_args: "{code_path}"
+  seccomp_rule: py
+py3:
+  type: interpreter
+  code_file: "{code_path}"
+  execute_file: /usr/bin/python3
+  execute_args: "{code_path}"
+  seccomp_rule: py
+php:
+  type: interpreter
+  code_file: "{code_path}"
+  execute_file: /usr/bin/php
+  execute_args: "{code_path}"
+rs:
+  type: compiler
+  compiler_file: /usr/bin/rustc
+  compiler_args: -O -o {exe_path} {code_path}
+  code_file: foo.rs
+  execute_file: "{exe_path}"
+hs:
+  type: compiler
+  compiler_file: /usr/bin/ghc
+  compiler_args: -O -outputdir /tmp -o {exe_path} {code_path}
+  code_file: foo.hs
+  execute_file: "{exe_path}"
+  env:
+    HOME: /
+js:
+  type: interpreter
+  code_file: foo.js
+  execute_file: /usr/bin/node
+  execute_args: --max_old_space_size={max_memory} {code_path}
+  seccomp_rule: js
+  memory_flag: MB

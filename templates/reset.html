@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Reset Judge Server</title>
+</head>
+<body>
+  <h1>Welcome to eJudge v2</h1>
+  <p>Your username: ejudge</p>
+  <form action="" method="post">
+    {% if old_password_required %}
+      <p><label>Old password:</label> <input type="password" name="old_password"></p>
+    {% endif %}
+    <p><label>New password:</label> <input type="password" name="new_password"></p>
+    <p><label>Password again:</label> <input type="password" name="new_password_confirm"></p>
+    <p><input type="submit" value="OK"></p>
+  </form>
+</body>
+</html>
