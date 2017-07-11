@@ -2,7 +2,7 @@ import shutil
 from os import path, makedirs, chown, remove
 
 from config.config import COMPILER_GROUP_GID, COMPILER_USER_UID, RUN_GROUP_GID, RUN_USER_UID
-from config.config import LANGUAGE_CONFIG, SUB_BASE, USUAL_READ_SIZE, ENV, COMPILE_TIME_FACTOR
+from config.config import LANGUAGE_CONFIG, SUB_BASE, USUAL_READ_SIZE, ENV, COMPILE_TIME_FACTOR, REAL_TIME_FACTOR
 from config.config import Verdict
 from core.exception import *
 from core.util import format, random_string
@@ -121,12 +121,14 @@ class Submission(object):
         :param stderr:
         :param max_time: in seconds
         :param max_memory: in megabytes
-        :param max_real_time (optional): in seconds, default is max_time * 2
+        :param max_real_time (optional): in seconds, default is max_time * 3
+        :param max_output_size (optional): in megabytes, default is 256
         :param trusted: when program is trusted, it will run with root privilege and without seccomp rule
         :param command_line_args: additional args from command line
         :return:
         """
-        max_real_time = kwargs.get('max_real_time', max_time * 2)
+        max_real_time = kwargs.get('max_real_time', max_time * REAL_TIME_FACTOR)
+        max_output_size = kwargs.get('max_output_size', 256)
         trusted = kwargs.get('trusted', False)
         command_line_args = kwargs.get('command_line_args', [])
 
@@ -151,7 +153,7 @@ class Submission(object):
         sandbox = Sandbox(self.execute_file, execute_args,
                           stdin=stdin, stdout=stdout, stderr=stderr,
                           max_time=max_time, max_real_time=max_real_time, max_memory=max_memory,
-                          uid=uid, gid=gid, seccomp_rule=seccomp_rule,
+                          max_output_size=max_output_size, uid=uid, gid=gid, seccomp_rule=seccomp_rule,
                           env=self.env)
         result = sandbox.run()
         return result

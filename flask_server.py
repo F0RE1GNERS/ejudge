@@ -5,11 +5,12 @@ from flask import Flask, render_template, request, Response, jsonify
 from flask_socketio import emit
 import yaml
 import json
+import logging
 
 from core.case import Case
 from core.judge import TrustedSubmission
 from config.config import COMPILE_MAX_TIME_FOR_TRUSTED
-from handler import flask_app, socketio, judge_handler
+from handler import flask_app, socketio, judge_handler, judge_handler_one, generate_handler, validate_handler
 
 
 @flask_app.route('/reset', methods=['GET', 'POST'])
@@ -64,10 +65,7 @@ def response_ok():
 @auth_required
 def upload_case(fid, io):
     """
-    You need to do something like /upload_case/f3758/input and bind binary data to request.data
-    :param fid:
-    :param io:
-    :return: status received if succeeded
+    You need to do something like /upload/case/f3758/input and bind binary data to request.data
     """
     case = Case(fid)
     if io == 'input':
@@ -78,9 +76,7 @@ def upload_case(fid, io):
 
 
 @flask_app.route('/upload/checker/<fid>', methods=['POST'])
-@flask_app.route('/upload/generator/<fid>', methods=['POST'])
 @flask_app.route('/upload/interactor/<fid>', methods=['POST'])
-@flask_app.route('/upload/validator/<fid>', methods=['POST'])
 @auth_required
 def upload_trusted_submission(fid):
     data = json.loads(request.get_json())
@@ -89,17 +85,79 @@ def upload_trusted_submission(fid):
     return response_ok()
 
 
-@socketio.on('judge')
-def handle_message(data):
-    def on_raw_message(body):
-        emit('judge_reply', body['result'])
+@flask_app.route('/delete/case/<fid>', methods=['POST'])
+@auth_required
+def delete_case(fid):
+    case = Case(fid)
+    case.clean()
+    return response_ok()
 
-    p = judge_handler.apply_async((data['fingerprint'], data['lang'], data['code'], data['cases'],
+
+@flask_app.route('/delete/checker/<fid>', methods=['POST'])
+@flask_app.route('/delete/interactor/<fid>', methods=['POST'])
+@auth_required
+def delete_trusted_submission(fid):
+    'This api is not recommended to use'
+    program = TrustedSubmission.fromExistingFingerprint(fid)
+    program.clean(True)
+    return response_ok()
+
+
+@flask_app.route('/generate', methods=['POST'])
+@auth_required
+def generate():
+    data = json.loads(request.get_json())
+    p = generate_handler.apply_async((data['fingerprint'], data['code'], data['lang'],
+                                      data['max_time'], data['max_memory'], data['command_line_args']))
+    return jsonify(p.get())
+
+
+@flask_app.route('/validate', methods=['POST'])
+@auth_required
+def validate():
+    data = json.loads(request.get_json())
+    p = validate_handler.apply_async((data['fingerprint'], data['code'], data['lang'],
+                                      data['max_time'], data['max_memory'], data['input']))
+    return jsonify(p.get())
+
+
+@flask_app.route('/judge/<target>', methods=['POST'])
+@auth_required
+def judge_one(target):
+    data = json.loads(request.get_json())
+    p = judge_handler_one.apply_async((data['submission'], data['max_time'], data['max_memory'], data['input']),
+                                      {'case_output_b64': data.get('output'), 'target': target,
+                                       'interactor': data.get('interactor'), 'checker': data.get('checker')})
+    return jsonify(p.get())
+
+
+@flask_app.route('/judge', methods=['POST'])
+@auth_required
+def judge():
+    'This is the http version of judge, used in retry'
+    def on_raw_message(body):
+        logging.info(body)
+
+    data = json.loads(request.get_json())
+    p = judge_handler.apply_async((data['fingerprint'], data['code'], data['lang'], data['cases'],
                                    data['max_time'], data['max_memory'], data['checker']),
                                   {'interactor_fingerprint': data.get('interactor'),
                                    'run_until_complete': data.get('run_until_complete', False),})
     return jsonify(p.get(on_message=on_raw_message))
 
+
+@socketio.on('judge')
+def handle_message(data):
+    def on_raw_message(body):
+        emit('judge_reply', body['result'])
+
+    if not check_auth(data.get('username'), data.get('password')):
+        return authorization_failed()
+    p = judge_handler.apply_async((data['fingerprint'], data['code'], data['lang'], data['cases'],
+                                   data['max_time'], data['max_memory'], data['checker']),
+                                  {'interactor_fingerprint': data.get('interactor'),
+                                   'run_until_complete': data.get('run_until_complete', False),})
+    return jsonify(p.get(on_message=on_raw_message))
 
 
 if __name__ == '__main__':

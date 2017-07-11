@@ -46,3 +46,10 @@ def get_signal_name(signal_num):
         return signal.Signals(signal_num).name
     except:
         return 'SIG%03d' % signal_num
+
+
+def serialize_sandbox_result(result):
+    'Can be also used for TrustedSubmission.Result'
+    d = result.__dict__.copy()
+    d['verdict'] = d['verdict'].value
+    return d

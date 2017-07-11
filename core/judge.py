@@ -111,9 +111,10 @@ class Interactor(TrustedSubmission):
 class Generator(TrustedSubmission):
 
     def generate(self, output_file, max_time, max_memory, command_line_args):
+        'Use online generator, output size is limited to 32M'
         try:
             generator_result = self.run(DEVNULL, output_file, DEVNULL, max_time, max_memory,
-                                        command_line_args=command_line_args)
+                                        command_line_args=command_line_args, max_output_size=32)
             verdict = self.get_verdict_from_test_result(generator_result)
             return Generator.Result(verdict, '')
         except CompileError as e:

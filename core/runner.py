@@ -11,10 +11,20 @@
 
 import pickle
 from os import fork, pipe, _exit, close, fdopen
+from enum import Enum
+import base64
 
-from config.config import DEVNULL, Verdict, COMPILE_TIME_FACTOR, REAL_TIME_FACTOR
-from core.util import get_signal_name
+from config.config import DEVNULL, Verdict, COMPILE_TIME_FACTOR, REAL_TIME_FACTOR, USUAL_READ_SIZE
+from core.util import get_signal_name, serialize_sandbox_result
 from sandbox.sandbox import Sandbox
+
+
+class RunnerResultType(Enum):
+    FINAL = 0
+    OUTPUT = 1
+    SUB_SANDBOX_RESULT = 2
+    CHECKER_RESULT = 3
+    INTERACTOR_RESULT = 4
 
 
 class CaseRunner(object):
@@ -29,16 +39,25 @@ class CaseRunner(object):
         self.case = case
         self.case.check_validity()
 
-    def run(self, case):
+    def run(self, case, result_type=RunnerResultType.FINAL):
         self.initiate_case(case)
 
         running_output = self.submission.make_a_file_to_write()
         running_result = self.submission.run(self.case.input_file, running_output, DEVNULL,
                                              self.max_time, self.max_memory)
+        if result_type == RunnerResultType.OUTPUT:
+            return {'output': self.read_output_as_b64(running_output)}
+        elif result_type == RunnerResultType.SUB_SANDBOX_RESULT:
+            return serialize_sandbox_result(running_result)
+
         if running_result.verdict != Verdict.ACCEPTED:
+            # If sub fails to run, the result is final
             return self.running_fail_result(running_result)
         else:
-            return self.do_check(running_output, running_result)
+            return self.do_check(running_output, running_result, result_type == RunnerResultType.CHECKER_RESULT)
+
+    def read_output_as_b64(self, file):
+        return base64.b64encode(open(file, 'rb').read()).decode()
 
     def running_fail_result(self, running_result):
         assert running_result.verdict != Verdict.ACCEPTED
@@ -48,11 +67,13 @@ class CaseRunner(object):
             result['message'] = get_signal_name(running_result.signal)
         return result
 
-    def do_check(self, running_output, running_result):
+    def do_check(self, running_output, running_result, get_message=False):
         result = dict()
         checker_result = self.checker.check(self.case.input_file, running_output, self.case.output_file,
                                             self.max_time, self.max_memory)
         result['verdict'] = checker_result.verdict
+        if get_message:
+            result['message'] = checker_result.message
         if checker_result.verdict == Verdict.ACCEPTED:
             result['time'] = running_result.time
         return result
@@ -64,7 +85,7 @@ class InteractiveRunner(CaseRunner):
         super().__init__(submission, checker, max_time, max_memory)
         self.interactor = interactor
 
-    def run(self, case):
+    def run(self, case, result_type=RunnerResultType.FINAL):
         self.initiate_case(case)
 
         running_output = self.submission.make_a_file_to_write()
@@ -102,10 +123,16 @@ class InteractiveRunner(CaseRunner):
         w.close()
         r_report.close()
 
+        if result_type == RunnerResultType.OUTPUT:
+            return {'output': self.read_output_as_b64(running_output)}
+        elif result_type == RunnerResultType.SUB_SANDBOX_RESULT:
+            return serialize_sandbox_result(running_result)
+        elif result_type == RunnerResultType.INTERACTOR_RESULT:
+            return {'verdict': interactor_result.verdict, 'message': interactor_result.message}
+
         if running_result.verdict != Verdict.ACCEPTED:
             return self.running_fail_result(running_result)
         elif interactor_result.verdict != Verdict.ACCEPTED:
-            print(interactor_result.message)
             return {'verdict': interactor_result.verdict}
         else:
-            return self.do_check(running_output, running_result)
+            return self.do_check(running_output, running_result, result_type == RunnerResultType.CHECKER_RESULT)

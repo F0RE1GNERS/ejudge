@@ -1,3 +1,4 @@
+from shutil import rmtree
 from os import path, makedirs, chmod
 from config.config import DATA_BASE
 
@@ -35,3 +36,6 @@ class Case(object):
         assert path.exists(self.output_file)
         chmod(self.input_file, 0o600)
         chmod(self.output_file, 0o600)
+
+    def clean(self):
+        rmtree(self._workspace, ignore_errors=True)

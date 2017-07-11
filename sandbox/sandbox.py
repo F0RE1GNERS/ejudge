@@ -30,7 +30,7 @@ class Sandbox:
 
     def __init__(self, execute_file, execute_args,
                  stdin=sys.stdin, stdout=sys.stdout, stderr=sys.stderr,
-                 max_time=-1, max_real_time=-1, max_memory=-1, max_output_size=1024, max_process_number=-1,
+                 max_time=-1, max_real_time=-1, max_memory=-1, max_output_size=256, max_process_number=-1,
                  seccomp_rule=None, uid=0, gid=0, env=None):
         """
 

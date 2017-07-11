@@ -45,7 +45,8 @@ class Verdict(Enum):
     COMPILE_ERROR = 6
     JUDGE_ERROR = 11
 
+TRACEBACK_LIMIT = 5
 COMPILE_MAX_TIME_FOR_TRUSTED = 30
 COMPILE_TIME_FACTOR = 10  # compile time limit is 10 times max time limit
-REAL_TIME_FACTOR = 2  # real time limit is 2 times max time limit
+REAL_TIME_FACTOR = 3  # real time limit is 2 times max time limit
 assert COMPILE_TIME_FACTOR >= REAL_TIME_FACTOR  # need to make sure compile time limit is larger for interactor safety
