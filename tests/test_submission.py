@@ -36,7 +36,7 @@ class APlusBTest(TestBase):
     def test_c(self):
         pass
 
-    def test_cc11(self):
+    def test_cpp(self):
         pass
 
     def test_cc14(self):
@@ -63,7 +63,7 @@ class APlusBTest(TestBase):
     def test_py2(self):
         pass
 
-    def test_py3(self):
+    def test_python(self):
         pass
 
     def test_rs(self):

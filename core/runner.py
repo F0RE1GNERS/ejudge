@@ -88,11 +88,17 @@ class InteractiveRunner(CaseRunner):
     def run(self, case, result_type=RunnerResultType.FINAL):
         self.initiate_case(case)
 
+        # prevent compile waiting time
+        if self.interactor.to_compile:
+            self.interactor.compile(self.max_time * COMPILE_TIME_FACTOR)
+        if self.submission.to_compile:
+            self.submission.compile(self.max_time * COMPILE_TIME_FACTOR)
+
         running_output = self.submission.make_a_file_to_write()
 
-        r1, w1 = pipe() # interactor read, submission write
-        r2, w2 = pipe() # submission read, interactor write
-        r_report, w_report = pipe() # main process read, interactor report
+        r1, w1 = pipe()  # interactor read, submission write
+        r2, w2 = pipe()  # submission read, interactor write
+        r_report, w_report = pipe()  # main process read, interactor report
 
         interactor_pid = fork()
         if interactor_pid == 0:
@@ -116,8 +122,7 @@ class InteractiveRunner(CaseRunner):
         close(w_report)
         r, w = fdopen(r2, 'r'), fdopen(w1, 'w')
         r_report = fdopen(r_report, 'rb')
-        running_result = self.submission.run(r, w, DEVNULL, self.max_time, self.max_memory,
-                                             max_real_time=(COMPILE_TIME_FACTOR + REAL_TIME_FACTOR) * self.max_time)
+        running_result = self.submission.run(r, w, DEVNULL, self.max_time, self.max_memory)
         interactor_result = pickle.load(r_report)
         r.close()
         w.close()

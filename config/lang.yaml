@@ -4,7 +4,7 @@ c:
   compiler_args: -O2 -std=c99 -o {exe_path} {code_path} -DONLINE_JUDGE -lm -fmax-errors=3
   code_file: foo.c
   execute_file: "{exe_path}"
-cc11:
+cpp:
   type: compiler
   compiler_file: /usr/bin/g++
   compiler_args: -O2 -std=c++11 -o {exe_path} {code_path} -DONLINE_JUDGE -lm -fmax-errors=3
@@ -50,7 +50,7 @@ py2:
   execute_file: /usr/bin/python
   execute_args: "{code_path}"
   seccomp_rule: py
-py3:
+python:
   type: interpreter
   code_file: "{code_path}"
   execute_file: /usr/bin/python3

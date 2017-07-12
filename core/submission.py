@@ -108,7 +108,10 @@ class Submission(object):
             return ''
 
     def make_a_file_to_write(self):
-        return path.join(self.workspace, "output_" + random_string())
+        mpath = path.join(self.workspace, "output_" + random_string())
+        open(mpath, 'w').close()
+        chown(mpath, COMPILER_USER_UID, COMPILER_GROUP_GID)
+        return mpath
 
     def run(self, stdin, stdout, stderr, max_time, max_memory, **kwargs):
         """
@@ -133,12 +136,12 @@ class Submission(object):
         command_line_args = kwargs.get('command_line_args', [])
 
         if trusted:
-            uid, gid = 0, 0
+            uid, gid = COMPILER_USER_UID, COMPILER_GROUP_GID
             seccomp_rule = None
             execute_args = self.execute_args_unsafe.copy()
         else:
             uid, gid = RUN_USER_UID, RUN_GROUP_GID
-            seccomp_rule = self.seccomp_rule # general by default
+            seccomp_rule = self.seccomp_rule  # general by default
             execute_args = self.execute_args.copy()
 
         execute_args.extend(command_line_args)

@@ -27,6 +27,10 @@ celery.conf.update(flask_app.config)
 socketio = SocketIO(flask_app, async_mode='eventlet')
 
 
+def reject_with_traceback():
+    return {'status': 'reject', 'message': traceback.format_exc(TRACEBACK_LIMIT)}
+
+
 @celery.task(bind=True)
 def judge_handler(self,
                   sub_fingerprint, sub_code, sub_lang,
@@ -70,7 +74,7 @@ def judge_handler(self,
             response.update(time=time_verdict)
         submission.clean()
     except:
-        response = {'status': 'reject', 'message': traceback.format_exc(TRACEBACK_LIMIT)}
+        response = reject_with_traceback()
     finally:
         try:
             submission.clean()
@@ -123,11 +127,15 @@ def judge_handler_one(sub_dict, max_time, max_memory, case_input_b64, case_outpu
         try:
             result = case_runner.run(case, result_type=target)
             result.update(status='received')
-            result['verdict'] = result['verdict'].value
+            if result.get('verdict'):
+                result['verdict'] = result['verdict'].value
         except CompileError as ce:
-            result = {'status': 'received', 'verdict': Verdict.COMPILE_ERROR.value, 'message': ce.detail}
+            if target == RunnerResultType.FINAL:
+                result = {'status': 'received', 'verdict': Verdict.COMPILE_ERROR.value, 'message': ce.detail}
+            else:
+                raise
     except:
-        result = {'status': 'reject', 'message': traceback.format_exc(TRACEBACK_LIMIT)}
+        result = reject_with_traceback()
     finally:
         try:
             submission.clean()
@@ -142,14 +150,19 @@ def judge_handler_one(sub_dict, max_time, max_memory, case_input_b64, case_outpu
 
 
 @celery.task
-def generate_handler(gen_fingerprint, gen_code, gen_lang, max_time, max_memory, command_line_args):
+def generate_handler(gen_fingerprint, gen_code, gen_lang, max_time, max_memory, command_line_args, multiple=False):
+    def get_b64_from_file(file_path):
+        return base64.b64encode(open(file_path, 'rb').read()).decode()
+
     try:
         generator = Generator(gen_fingerprint, gen_code, gen_lang)
         tmp_output = generator.make_a_file_to_write()
-        generator.generate(tmp_output, max_time, max_memory, command_line_args)
-        result = {'status': 'received', 'output': base64.b64encode(open(tmp_output, 'rb').read()).decode()}
+        running_result = generator.generate(tmp_output, max_time, max_memory, command_line_args)
+        if running_result.verdict != Verdict.ACCEPTED:
+            raise RuntimeError("Generator failed to complete")
+        result = {'status': 'received', 'output': get_b64_from_file(tmp_output)}
     except:
-        result = {'status': 'reject', 'message': traceback.format_exc(TRACEBACK_LIMIT)}
+        result = reject_with_traceback()
     finally:
         try:
             generator.clean()
@@ -159,16 +172,16 @@ def generate_handler(gen_fingerprint, gen_code, gen_lang, max_time, max_memory, 
 
 
 @celery.task
-def validate_handler(val_fingerprint, val_code, val_lang, max_time, max_memory, case_input_b64):
+def validate_handler(val_fingerprint, val_code, val_lang, max_time, max_memory, case_input_b64, multiple=False):
     try:
         validator = Validator(val_fingerprint, val_code, val_lang)
         tmp_input = validator.make_a_file_to_write()
-        with open(tmp_input, 'r') as fs:
+        with open(tmp_input, 'wb') as fs:
             fs.write(base64.b64decode(case_input_b64))
         val_result = validator.validate(tmp_input, max_time, max_memory)
-        result = {'status': 'received', 'verdict': val_result.verdict, 'message': val_result.message}
+        result = {'status': 'received', 'verdict': val_result.verdict.value, 'message': val_result.message}
     except:
-        result = {'status': 'reject', 'message': traceback.format_exc(TRACEBACK_LIMIT)}
+        result = reject_with_traceback()
     finally:
         try:
             validator.clean()
@@ -201,16 +214,18 @@ def stress_handler(sub1, sub2, gen, command_line_args_list, max_time, max_memory
             case = Case(random_string())
             generator.generate(case.input_file, max_time, max_memory, command_line_args_list[args_idx])
             with open(case.output_file, 'wb') as fs:
-                fs.write(base64.b64decode(case_runner1.run(case, result_type=RunnerResultType.OUTPUT)))
+                fs.write(base64.b64decode(case_runner1.run(case, result_type=RunnerResultType.OUTPUT)['output']))
+            case.check_validity()
             result = case_runner2.run(case)
             if result['verdict'] != Verdict.ACCEPTED:
-                report.append(base64.b64encode(open(case.input_file, 'rb').read()))
+                report.append(base64.b64encode(open(case.input_file, 'rb').read()).decode())
                 max_generate -= 1
             case.clean()
             args_idx = (args_idx + 1) % len(command_line_args_list)
 
+        result = {'status': 'received', 'output': report}
     except:
-        result = {'status': 'reject', 'message': traceback.format_exc(TRACEBACK_LIMIT)}
+        result = reject_with_traceback()
     finally:
         try:
             submission1.clean()

@@ -15,6 +15,6 @@ int main() {
   int sum;
   cin>>num1>>num2;
   sum = solveMeFirst(num1,num2);
-  cout<<sum;
+  cout<<sum<<endl;
   return 0;
 }

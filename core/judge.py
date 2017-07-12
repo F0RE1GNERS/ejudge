@@ -48,13 +48,16 @@ class TrustedSubmission(Submission):
             self.verdict = verdict
             self.message = message
 
+        def __repr__(self):
+            return "TrustedSubmission.Result object: " + str(self.__dict__)
+
     def run(self, stdin, stdout, stderr, max_time, max_memory, **kwargs):
         kwargs.pop('trusted', None)
         return super().run(stdin, stdout, stderr, max_time, max_memory, trusted=True, **kwargs)
 
     def __init__(self, fingerprint, code, lang, permanent=False):
         super().__init__(fingerprint, code, lang, permanent)
-        if self.to_compile and self.lang in ['cc', 'cc11', 'cc14', 'cc17']:
+        if self.to_compile and self.lang in ['cc', 'cpp', 'cc14', 'cc17']:
             self.compiler_args = ['-I', LIB_BASE] + self.compiler_args
 
     def get_verdict_from_test_result(self, checker_result):
@@ -62,10 +65,11 @@ class TrustedSubmission(Submission):
         :param checker_result: a Sandbox.Result directly returned from checker running
         :return: an integer, one of the verdict
         """
-        if checker_result.verdict != Verdict.ACCEPTED and checker_result.verdict != Verdict.RUNTIME_ERROR:
-            return Verdict.JUDGE_ERROR
-        elif checker_result.exit_code != 0:
-            return Verdict.WRONG_ANSWER
+        if checker_result.verdict != Verdict.ACCEPTED:
+            if checker_result.verdict != Verdict.RUNTIME_ERROR:
+                return Verdict.JUDGE_ERROR
+            else:
+                return Verdict.WRONG_ANSWER
         else:
             return Verdict.ACCEPTED
 
@@ -95,8 +99,6 @@ class Interactor(TrustedSubmission):
         result_file = self.make_a_file_to_write()
         try:
             interactor_result = self.run(pipe_for_stdin, pipe_for_stdout, DEVNULL, max_time, max_memory,
-                                         max_real_time=(COMPILE_TIME_FACTOR + REAL_TIME_FACTOR) * max_time,
-                                         # interactors may need to wait for the other one to compile
                                          command_line_args=[input_file, output_file, answer_file, result_file])
             message = self.get_message_from_file(result_file, cleanup=True)
             verdict = self.get_verdict_from_test_result(interactor_result)
@@ -111,10 +113,9 @@ class Interactor(TrustedSubmission):
 class Generator(TrustedSubmission):
 
     def generate(self, output_file, max_time, max_memory, command_line_args):
-        'Use online generator, output size is limited to 32M'
         try:
             generator_result = self.run(DEVNULL, output_file, DEVNULL, max_time, max_memory,
-                                        command_line_args=command_line_args, max_output_size=32)
+                                        command_line_args=command_line_args)
             verdict = self.get_verdict_from_test_result(generator_result)
             return Generator.Result(verdict, '')
         except CompileError as e:

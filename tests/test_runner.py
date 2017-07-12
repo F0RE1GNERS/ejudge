@@ -5,6 +5,9 @@ from core.judge import Checker, Interactor
 from core.exception import CompileError
 from config.config import Verdict
 from tests.test_base import TestBase
+import logging
+
+logging.basicConfig(level=logging.INFO)
 
 
 class RunnerTest(TestBase):
@@ -14,44 +17,44 @@ class RunnerTest(TestBase):
         super(RunnerTest, self).setUp()
 
     def test_aplusb(self):
-        code = open('./submission/aplusb.cc11').read()
+        code = open('./submission/aplusb.cpp').read()
         checker_code = open('./submission/ncmp.cpp').read()
         case = Case(self.rand_str(True))
         case.write_input_binary(b"1\n2\n")
         case.write_output_binary(b"3\n")
-        checker = Checker(self.rand_str(True), checker_code, 'cc11')
-        submission = Submission(self.rand_str(True), code, 'cc11')
+        checker = Checker(self.rand_str(True), checker_code, 'cpp')
+        submission = Submission(self.rand_str(True), code, 'cpp')
         case_runner = CaseRunner(submission, checker, 1, 128)
         result = case_runner.run(case)
         self.assertEqual(result['verdict'], Verdict.ACCEPTED)
 
     def test_aplub_wrong(self):
-        code = open('./submission/aplusb.cc11').read()
+        code = open('./submission/aplusb.cpp').read()
         checker_code = open('./submission/ncmp.cpp').read()
         case = Case(self.rand_str(True))
         case.write_input_binary(b"1\n2\n")
         case.write_output_binary(b"4\n")
-        checker = Checker(self.rand_str(True), checker_code, 'cc11')
-        submission = Submission(self.rand_str(True), code, 'cc11')
+        checker = Checker(self.rand_str(True), checker_code, 'cpp')
+        submission = Submission(self.rand_str(True), code, 'cpp')
         case_runner = CaseRunner(submission, checker, 1, 128)
         result = case_runner.run(case)
         self.assertEqual(result['verdict'], Verdict.WRONG_ANSWER)
 
     def test_aplusb_judge_fail(self):
-        code = open('./submission/aplusb.cc11').read()
+        code = open('./submission/aplusb.cpp').read()
         checker_code = open('./submission/ncmp.cpp').read()
         case = Case(self.rand_str(True))
         case.write_input_binary(b"1\n2\n")
         case.write_output_binary(b"4\n")
         checker = Checker(self.rand_str(True), checker_code, 'c')
-        submission = Submission(self.rand_str(True), code, 'cc11')
+        submission = Submission(self.rand_str(True), code, 'cpp')
         case_runner = CaseRunner(submission, checker, 1, 128)
         result = case_runner.run(case)
         self.assertEqual(result['verdict'], Verdict.JUDGE_ERROR)
 
     def test_aplusb_compile_error(self):
         with self.assertRaises(CompileError):
-            code = open('./submission/aplusb.cc11').read()
+            code = open('./submission/aplusb.cpp').read()
             checker_code = open('./submission/ncmp.cpp').read()
             case = Case(self.rand_str(True))
             case.write_input_binary(b"1\n2\n")
@@ -68,9 +71,9 @@ class RunnerTest(TestBase):
         case = Case(self.rand_str(True))
         case.write_input_binary(open('./interact/a-plus-b-input.txt', 'rb').read())
         case.write_output_binary(open('./interact/a-plus-b-output.txt', 'rb').read())
-        checker = Checker(self.rand_str(True), checker_code, 'cc11')
-        interactor = Interactor(self.rand_str(True), interacter_code, 'cc11')
-        submission = Submission(self.rand_str(True), code, 'py3')
+        checker = Checker(self.rand_str(True), checker_code, 'cpp')
+        interactor = Interactor(self.rand_str(True), interacter_code, 'cpp')
+        submission = Submission(self.rand_str(True), code, 'python')
         case_runner = InteractiveRunner(submission, interactor, checker, 1, 128)
         result = case_runner.run(case)
         self.assertEqual(result['verdict'], Verdict.ACCEPTED)
@@ -82,9 +85,9 @@ class RunnerTest(TestBase):
         case = Case(self.rand_str(True))
         case.write_input_binary(open('./interact/a-plus-b-input.txt', 'rb').read())
         case.write_output_binary(open('./interact/a-plus-b-output-wrong.txt', 'rb').read())
-        checker = Checker(self.rand_str(True), checker_code, 'cc11')
-        interactor = Interactor(self.rand_str(True), interacter_code, 'cc11')
-        submission = Submission(self.rand_str(True), code, 'py3')
+        checker = Checker(self.rand_str(True), checker_code, 'cpp')
+        interactor = Interactor(self.rand_str(True), interacter_code, 'cpp')
+        submission = Submission(self.rand_str(True), code, 'python')
         case_runner = InteractiveRunner(submission, interactor, checker, 1, 128)
         result = case_runner.run(case)
         self.assertEqual(result['verdict'], Verdict.WRONG_ANSWER)
@@ -96,9 +99,9 @@ class RunnerTest(TestBase):
         case = Case(self.rand_str(True))
         case.write_input_binary(open('./interact/a-plus-b-input.txt', 'rb').read())
         case.write_output_binary(open('./interact/a-plus-b-output.txt', 'rb').read())
-        checker = Checker(self.rand_str(True), checker_code, 'cc11')
-        interactor = Interactor(self.rand_str(True), interacter_code, 'cc11')
-        submission = Submission(self.rand_str(True), code, 'py3')
+        checker = Checker(self.rand_str(True), checker_code, 'cpp')
+        interactor = Interactor(self.rand_str(True), interacter_code, 'cpp')
+        submission = Submission(self.rand_str(True), code, 'python')
         case_runner = InteractiveRunner(submission, interactor, checker, 1, 128)
         result = case_runner.run(case)
         self.assertEqual(result['verdict'], Verdict.RUNTIME_ERROR)
@@ -110,10 +113,10 @@ class RunnerTest(TestBase):
         case = Case(self.rand_str(True))
         case.write_input_binary(open('./interact/a-plus-b-input.txt', 'rb').read())
         case.write_output_binary(open('./interact/a-plus-b-output-wrong.txt', 'rb').read())
-        checker = Checker(self.rand_str(True), checker_code, 'cc11')
-        interactor = Interactor(self.rand_str(True), interacter_code, 'cc11')
-        submission = Submission(self.rand_str(True), code, 'py3')
+        checker = Checker(self.rand_str(True), checker_code, 'cpp')
+        interactor = Interactor(self.rand_str(True), interacter_code, 'cpp')
+        submission = Submission(self.rand_str(True), code, 'python')
         case_runner = InteractiveRunner(submission, interactor, checker, 1, 128)
         result = case_runner.run(case)
-        self.assertEqual(result['verdict'], Verdict.IDLENESS_LIMIT_EXCEEDED)
+        self.assertIn(result['verdict'], {Verdict.JUDGE_ERROR, Verdict.IDLENESS_LIMIT_EXCEEDED})
 

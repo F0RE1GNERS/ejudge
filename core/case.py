@@ -1,6 +1,6 @@
 from shutil import rmtree
-from os import path, makedirs, chmod
-from config.config import DATA_BASE
+from os import path, makedirs, chmod, chown
+from config.config import DATA_BASE, COMPILER_GROUP_GID, COMPILER_USER_UID
 
 
 class Case(object):
@@ -34,6 +34,8 @@ class Case(object):
     def check_validity(self):
         assert path.exists(self.input_file)
         assert path.exists(self.output_file)
+        chown(self.input_file, COMPILER_USER_UID, COMPILER_GROUP_GID)
+        chown(self.output_file, COMPILER_USER_UID, COMPILER_GROUP_GID)
         chmod(self.input_file, 0o600)
         chmod(self.output_file, 0o600)
 

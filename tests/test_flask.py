@@ -1,12 +1,19 @@
+"""
+!!! IMPORTANT:
+Before running this test, you need to run both flask server and celery
+"""
+
 import requests
 import json
 import logging
 import base64
+import os
 from socketIO_client import SocketIO, LoggingNamespace
 
 from config.config import DATA_BASE, Verdict
 from core.case import Case
 from tests.test_base import TestBase
+from config.config import SUB_BASE
 
 
 class FlaskTest(TestBase):
@@ -15,7 +22,7 @@ class FlaskTest(TestBase):
         self.workspace = '/tmp/flask'
         self.url_base = 'http://localhost:5000'
         self.token = ('ejudge', 'naive') # Token has to be reset to do this test
-        super(FlaskTest, self).setUp()
+        super().setUp()
 
     def test_upload_success(self):
         fingerprint = 'test_%s' % self.rand_str()
@@ -43,15 +50,163 @@ class FlaskTest(TestBase):
         result = requests.post(self.url_base + '/upload/case/%s/input' % fingerprint, data=b'123123',
                                auth=self.token).json()
         self.assertEqual(result['status'], 'received')
-        result = requests.post(self.url_base + '/delete/case/%s' % fingerprint, data=b'123123',
-                               auth=self.token).json()
+        result = requests.delete(self.url_base + '/delete/case/%s' % fingerprint, data=b'123123',
+                                auth=self.token).json()
         self.assertEqual(result['status'], 'received')
+
+    def test_upload_checker_fail(self):
+        fingerprint = 'test_%s' % self.rand_str()
+        json_data = {'fingerprint': fingerprint, 'code': 'code', 'lang': 'cpp'}
+        result = requests.post(self.url_base + '/upload/checker', json=json.dumps(json_data),
+                               auth=self.token).json()
+        self.assertEqual('reject', result['status'])
+        self.assertIn("CompileError", result['message'])
+
+    def test_upload_interactor_with_delete(self):
+        fingerprint = 'test_%s' % self.rand_str()
+        json_data = {'fingerprint': fingerprint, 'code': open('./interact/interactor-a-plus-b.cpp', 'r').read(), 'lang': 'cpp'}
+        result = requests.post(self.url_base + '/upload/checker', json=json.dumps(json_data),
+                               auth=self.token).json()
+        self.assertEqual('received', result['status'])
+        self.assertIn(fingerprint, os.listdir(SUB_BASE))
+        # without token
+        result = requests.delete(self.url_base + '/delete/interactor/' + fingerprint).json()
+        self.assertEqual('reject', result['status'])
+        # wrong place
+        result = requests.delete(self.url_base + '/delete/checker/' + fingerprint).json()
+        self.assertEqual('reject', result['status'])
+        result = requests.delete(self.url_base + '/delete/interactor/' + fingerprint, auth=self.token).json()
+        self.assertEqual('received', result['status'])
+        self.assertNotIn(fingerprint, os.listdir(SUB_BASE))
+
+    def test_generate_with_validate(self):
+        validator_code = open('./gen-and-val/bipartite-graph-validator.cpp').read()
+        generator_code = open('./gen-and-val/gen-bipartite-graph.cpp').read()
+        # 1 <= n, m <= 400, 0 <= k <= n * m
+        fingerprint = 'test_%s' % self.rand_str()
+        gen_data = {'fingerprint': fingerprint, 'lang': 'cpp', 'code': generator_code, 'max_time': 1, 'max_memory': 256,
+                    'command_line_args': ["10", "10", "20"]}
+        result = requests.post(self.url_base + '/generate', json=json.dumps(gen_data), auth=self.token).json()
+        output_b64 = result['output']
+        self.assertEqual(22, len(base64.b64decode(output_b64).decode().split('\n')))
+        self.assertNotIn(fingerprint, os.listdir(SUB_BASE))
+
+        val_data = {'fingerprint': fingerprint, 'lang': 'cpp', 'code': validator_code, 'max_time': 1, 'max_memory': 256,
+                    'input': output_b64}
+        result = requests.post(self.url_base + '/validate', json=json.dumps(val_data), auth=self.token).json()
+        self.assertEqual(Verdict.ACCEPTED.value, result['verdict'])
+
+    def test_generate_fail(self):
+        generator_code = open('./gen-and-val/gen-bipartite-graph.cpp').read()
+        # 1 <= n, m <= 400, 0 <= k <= n * m
+        fingerprint = 'test_%s' % self.rand_str()
+        gen_data = {'fingerprint': fingerprint, 'lang': 'cpp', 'code': generator_code, 'max_time': 1, 'max_memory': 256,
+                    'command_line_args': ["10", "10", "300"]}
+        result = requests.post(self.url_base + '/generate', json=json.dumps(gen_data), auth=self.token).json()
+        self.assertEqual("reject", result['status'])
+
+    def test_validate_fail(self):
+        fingerprint = 'test_%s' % self.rand_str()
+        validator_code = open('./gen-and-val/bipartite-graph-validator.cpp').read()
+        val_data = {'fingerprint': fingerprint, 'lang': 'cpp', 'code': validator_code, 'max_time': 1, 'max_memory': 256,
+                    'input': base64.b64encode(b"1 2 3").decode()}
+        result = requests.post(self.url_base + '/validate', json=json.dumps(val_data), auth=self.token).json()
+        self.assertEqual(Verdict.WRONG_ANSWER.value, result['verdict'])
+
+    def test_stress(self):
+        checker_fingerprint, std_fingerprint, sub_fingerprint, gen_fingerprint = \
+            self.rand_str(True), self.rand_str(True), self.rand_str(True), self.rand_str(True)
+        checker_dict = dict(fingerprint=checker_fingerprint, lang='cpp', code=open('./submission/ncmp.cpp').read())
+        std_dict = dict(fingerprint=std_fingerprint, lang='cpp', code=open('./submission/aplusb.cpp').read())
+        sub_dict = dict(fingerprint=sub_fingerprint, lang='python', code=open('./gen-and-val/aplusb-sometimes-wrong.py').read())
+        gen_dict = dict(fingerprint=gen_fingerprint, lang='python', code=open('./gen-and-val/aplusb-gen.py').read())
+
+        stress_data = dict(std=std_dict, submission=sub_dict, generator=gen_dict, command_line_args_list=[[]],
+                           max_time=1, max_memory=128, max_sum_time=20, checker=checker_dict)
+        result = requests.post(self.url_base + '/stress', json=json.dumps(stress_data), auth=self.token).json()
+        for out in result['output']:
+            self.assertTrue(int(base64.b64decode(out).decode().split(' ')[0]) % 2 == 0)
+
+        # correct sub
+        sub_dict = dict(fingerprint=sub_fingerprint, lang='java', code=open('./submission/aplusb.java').read())
+        stress_data = dict(std=std_dict, submission=sub_dict, generator=gen_dict, command_line_args_list=[[]],
+                           max_time=1, max_memory=128, max_sum_time=15, checker=checker_dict)
+        result = requests.post(self.url_base + '/stress', json=json.dumps(stress_data), auth=self.token).json()
+        self.assertFalse(result['output'])
+
+    def test_stress_interactor(self):
+        checker_fingerprint, std_fingerprint, sub_fingerprint, gen_fingerprint, interactor_fingerprint = \
+            self.rand_str(True), self.rand_str(True), self.rand_str(True), self.rand_str(True), self.rand_str(True)
+        checker_dict = dict(fingerprint=checker_fingerprint, lang='cpp', code=open('./submission/ncmp.cpp').read())
+        std_dict = dict(fingerprint=std_fingerprint, lang='cpp', code=open('./submission/aplusb.cpp').read())
+        sub_dict = dict(fingerprint=sub_fingerprint, lang='python',
+                        code=open('./gen-and-val/aplusb-sometimes-wrong.py').read())
+        gen_dict = dict(fingerprint=gen_fingerprint, lang='python', code=open('./interact/aplusb-gen-one-with-count.py').read())
+        inter_dict = dict(fingerprint=interactor_fingerprint, lang='cpp',
+                          code=open('./interact/interactor-a-plus-b.cpp').read())
+
+        stress_data = dict(std=std_dict, submission=sub_dict, generator=gen_dict, command_line_args_list=[[]],
+                           max_time=1, max_memory=128, max_sum_time=20, checker=checker_dict, interactor=inter_dict,
+                           max_generate=10)
+        result = requests.post(self.url_base + '/stress', json=json.dumps(stress_data), auth=self.token).json()
+        self.assertEqual(10, len(result['output']))
+
+    def test_judge_one(self):
+        checker_fingerprint, std_fingerprint = \
+            self.rand_str(True), self.rand_str(True)
+        input_b64 = base64.b64encode(b'1 2').decode()
+        output_b64 = base64.b64encode(b'3').decode()
+        sub_dict = dict(fingerprint=std_fingerprint, lang='cpp', code=open('./submission/aplusb.cpp').read())
+        checker_dict = dict(fingerprint=checker_fingerprint, lang='cpp', code=open('./submission/ncmp.cpp').read())
+        data = dict(submission=sub_dict, max_time=1, max_memory=128, input=input_b64)
+
+        # output
+        result = requests.post(self.url_base + '/judge/output', json=json.dumps(data), auth=self.token).json()
+        self.assertEqual('3', base64.b64decode(result['output']).decode().strip())
+
+        # sandbox
+        result = requests.post(self.url_base + '/judge/sandbox', json=json.dumps(data), auth=self.token).json()
+        self.assertEqual(0, result['verdict'])
+
+        # checker
+        data.update(checker=checker_dict, output=output_b64)
+        result = requests.post(self.url_base + '/judge/checker', json=json.dumps(data), auth=self.token).json()
+        self.assertEqual(Verdict.ACCEPTED.value, result['verdict'])
+        self.assertEqual("1 number(s): \"3\"", result['message'])
+
+        # result
+        result = requests.post(self.url_base + '/judge/checker', json=json.dumps(data), auth=self.token).json()
+        self.assertEqual(Verdict.ACCEPTED.value, result['verdict'])
+
+    def test_judge_one_interactor(self):
+        checker_fingerprint, std_fingerprint, interactor_fingerprint = \
+            self.rand_str(True), self.rand_str(True), self.rand_str(True)
+        input_b64 = base64.b64encode(b'1\n1 2').decode()
+        output_b64 = base64.b64encode(b'3').decode()
+        sub_dict = dict(fingerprint=std_fingerprint, lang='python', code=open('./interact/a-plus-b.py').read())
+        checker_dict = dict(fingerprint=checker_fingerprint, lang='cpp', code=open('./submission/ncmp.cpp').read())
+        interactor_dict = dict(fingerprint=interactor_fingerprint, lang='cpp', code=open('./interact/interactor-a-plus-b.cpp').read())
+        data = dict(submission=sub_dict, max_time=1, max_memory=128, input=input_b64, interactor=interactor_dict)
+
+        # interactor
+        result = requests.post(self.url_base + '/judge/interactor', json=json.dumps(data), auth=self.token).json()
+        self.assertEqual("1 queries processed", result['message'])
+
+        # checker
+        data.update(checker=checker_dict, output=output_b64)
+        result = requests.post(self.url_base + '/judge/checker', json=json.dumps(data), auth=self.token).json()
+        self.assertEqual(Verdict.ACCEPTED.value, result['verdict'])
+        self.assertEqual("1 number(s): \"3\"", result['message'])
+
+        # result
+        result = requests.post(self.url_base + '/judge/checker', json=json.dumps(data), auth=self.token).json()
+        self.assertEqual(Verdict.ACCEPTED.value, result['verdict'])
 
     def judge_aplusb(self, code, lang, socket=True):
         checker_fingerprint = self.rand_str(True)
         case_fingerprints = [self.rand_str(True) for _ in range(31)]
-        checker_dict = dict(fingerprint=checker_fingerprint, lang='cc11', code=open('./submission/ncmp.cpp').read())
-        response = requests.post(self.url_base + "/upload/checker/%s" % checker_fingerprint,
+        checker_dict = dict(fingerprint=checker_fingerprint, lang='cpp', code=open('./submission/ncmp.cpp').read())
+        response = requests.post(self.url_base + "/upload/checker",
                                  json=json.dumps(checker_dict), auth=self.token)
         self.assertEqual(response.json()['status'], 'received')
 
@@ -94,14 +249,14 @@ class FlaskTest(TestBase):
         return result['verdict']
 
     def test_aplusb_judge(self):
-        self.assertEqual(self.judge_aplusb(open('./submission/aplusb.cc11').read(), 'cc11'), Verdict.ACCEPTED.value)
-        self.assertEqual(self.judge_aplusb(open('./submission/aplusb.cc11').read(), 'cc11', False), Verdict.ACCEPTED.value)
+        self.assertEqual(self.judge_aplusb(open('./submission/aplusb.cpp').read(), 'cpp'), Verdict.ACCEPTED.value)
+        self.assertEqual(self.judge_aplusb(open('./submission/aplusb.cpp').read(), 'cpp', False), Verdict.ACCEPTED.value)
 
     def test_aplusb_judge_ce(self):
         self.assertEqual(self.judge_aplusb(open('./submission/aplusb-ce.c').read(), 'c'), Verdict.COMPILE_ERROR.value)
 
     def test_aplusb_judge_wa(self):
-        self.assertEqual(self.judge_aplusb(open('./submission/aplusb-wrong.py3').read(), 'py3'), Verdict.WRONG_ANSWER.value)
+        self.assertEqual(self.judge_aplusb(open('./submission/aplusb-wrong.py').read(), 'python'), Verdict.WRONG_ANSWER.value)
 
     def test_socket_fail_auth(self):
         def callback(*args):
@@ -112,19 +267,3 @@ class FlaskTest(TestBase):
             socketIO.emit('judge', dict())
             socketIO.once('judge_reply', callback)
             socketIO.wait(seconds=1)
-
-    def test_judge_one(self):
-        checker_fingerprint = self.rand_str(True)
-        checker_dict = dict(fingerprint=checker_fingerprint, lang='cc11', code=open('./submission/ncmp.cpp').read())
-        response = requests.post(self.url_base + "/upload/checker/%s" % checker_fingerprint,
-                                 json=json.dumps(checker_dict), auth=self.token)
-        self.assertEqual(response.json()['status'], 'received')
-
-        input_data = base64.b64encode(open('./data/aplusb/ex_input1.txt', 'rb').read()).decode()
-        output_data = base64.b64encode(open('./data/aplusb/ex_output1.txt', 'rb').read()).decode()
-        judge_upload = dict(fingerprint=self.rand_str(True), lang='cc11', code=open('./submission/aplusb.cc11').read(),
-                            input=input_data, output=output_data, max_time=1, max_memory=128, checker=checker_fingerprint,
-                            )
-        p = requests.post(self.url_base + '/judge/one', json=json.dumps(judge_upload), auth=self.token).json()
-        self.assertEqual(p.get('verdict'), Verdict.ACCEPTED.value)
-
