@@ -9,37 +9,13 @@ import logging
 
 from core.case import Case
 from core.judge import TrustedSubmission
-from config.config import COMPILE_MAX_TIME_FOR_TRUSTED
+from config.config import COMPILE_MAX_TIME_FOR_TRUSTED, TOKEN_FILE, custom_config
 from handler import flask_app, socketio, judge_handler, judge_handler_one, generate_handler, validate_handler
 from handler import reject_with_traceback, stress_handler
 
 
-@flask_app.route('/reset', methods=['GET', 'POST'])
-def reset():
-    template_name = "reset.html"
-    token_name = 'config/token.yaml'
-    with open(token_name) as token_fs:
-        tokens = yaml.load(token_fs.read())
-    old_password_required = True if tokens['password'] else False
-    if request.method == 'GET':
-        return render_template(template_name, old_password_required=old_password_required)
-    else:
-        new_password = request.form.get('new_password')
-        if old_password_required and request.form.get('old_password') != tokens['password']:
-            return Response("Sorry, bad token!")
-        if not new_password:
-            return Response("Sorry, password cannot be empty!")
-        if new_password != request.form.get('new_password_confirm'):
-            return Response("Two passwords do not agree.")
-        tokens['password'] = new_password
-        with open(token_name, 'w') as token_fs:
-            yaml.dump(tokens, token_fs)
-        return Response('Reset complete!')
-
-
 def check_auth(username, password):
-    token_name = 'config/token.yaml'
-    with open(token_name) as token_fs:
+    with open(TOKEN_FILE) as token_fs:
         tokens = yaml.load(token_fs.read())
     return username == tokens['username'] and password == tokens['password']
 

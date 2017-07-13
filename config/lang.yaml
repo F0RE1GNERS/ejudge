@@ -56,6 +56,12 @@ python:
   execute_file: /usr/bin/python3
   execute_args: "{code_path}"
   seccomp_rule: py
+pypy:
+  type: interpreter
+  code_file: "{code_path}"
+  execute_file: /usr/bin/pypy
+  execute_args: "{code_path}"
+  seccomp_rule: py
 php:
   type: interpreter
   code_file: "{code_path}"

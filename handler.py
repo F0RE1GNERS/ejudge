@@ -4,7 +4,7 @@ from core.submission import Submission
 from core.runner import CaseRunner, InteractiveRunner, RunnerResultType
 from core.exception import CompileError
 from core.util import random_string, serialize_sandbox_result
-from config.config import Verdict, TRACEBACK_LIMIT
+from config.config import Verdict, TRACEBACK_LIMIT, SECRET_KEY, MAX_WORKER_NUMBER
 
 from flask import Flask
 from celery import Celery
@@ -18,8 +18,8 @@ flask_app = Flask(__name__)
 flask_app.config['broker_url'] = 'redis://localhost:6379/0'
 flask_app.config['result_backend'] = 'redis://localhost:6379/0'
 flask_app.config['imports'] = ['handler']
-flask_app.config['SECRET_KEY'] = 'secret!'
-# flask_app.config['worker_concurrency'] = max(os.cpu_count() // 2, 1)
+flask_app.config['SECRET_KEY'] = SECRET_KEY
+flask_app.config['worker_concurrency'] = MAX_WORKER_NUMBER
 
 celery = Celery(flask_app.name, broker=flask_app.config['broker_url'])
 celery.conf.update(flask_app.config)
