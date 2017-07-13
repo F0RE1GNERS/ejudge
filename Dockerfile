@@ -21,7 +21,6 @@ RUN useradd -r compiler \
     && chmod 600 config/* \
     && chmod +x run.sh \
     && cd tests \
-    && python3 test_sandbox.py \
     && python3 test_submission.py \
     && python3 test_runner.py \
     && rm -rf /ejudge/run \
