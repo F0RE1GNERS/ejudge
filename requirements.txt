@@ -10,3 +10,5 @@ flask-socketio
 python-socketio
 socketio-client
 celery
+eventlet
+redis

@@ -140,7 +140,7 @@ class SandboxTest(TestBase):
         config = self.config
         config["execute_file"] = self.compile_c("child_proc_cpu_time_limit.c")
         result = Sandbox(**config).run()
-        self.assertEqual(result.verdict, Verdict.IDLENESS_LIMIT_EXCEEDED)
+        self.assertIn(result.verdict, [Verdict.TIME_LIMIT_EXCEEDED, Verdict.IDLENESS_LIMIT_EXCEEDED])
 
     def test_child_proc_real_time_limit(self):
         config = self.config
@@ -167,7 +167,8 @@ class SandboxTest(TestBase):
         result = Sandbox(**config).run()
         self.assertEqual(result.verdict, Verdict.ACCEPTED)
         output = "uid=65534(nobody) gid=65534(nogroup) groups=65534(nogroup),0(root)\nuid 65534\ngid 65534\n"
-        self.assertEqual(output, self.output_content(config["stdout"]))
+        output2 = "uid=65534(nobody) gid=65534(nogroup) groups=65534(nogroup)\nuid 65534\ngid 65534\n"
+        self.assertIn(self.output_content(config["stdout"]), [output, output2])
 
     def test_gcc_random(self):
         config = self.config
