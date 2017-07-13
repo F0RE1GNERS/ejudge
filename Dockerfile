@@ -24,6 +24,7 @@ RUN useradd -r compiler \
     && python3 test_submission.py \
     && python3 test_runner.py \
     && rm -rf /ejudge/run \
+    && cd ejudge \
     && mkdir -p run/data run/sub run/log
 VOLUME /ejudge
 EXPOSE 5000
