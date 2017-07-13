@@ -1,6 +1,10 @@
 import unittest
 import logging
 from unittest import TestCase
+import os
+import sys
+
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from config.config import Verdict
 from core.submission import Submission
@@ -24,7 +28,7 @@ class APlusBTest(TestBase):
         }
 
         lang = self._testMethodName[5:]
-        code = open('./submission/aplusb.%s' % lang).read()
+        code = self.read_content('./submission/aplusb.%s' % lang)
         fingerprint = self.rand_str()
 
         self.submission = Submission(fingerprint, code, lang)
@@ -100,7 +104,7 @@ class TrustedSubmissionTest(TestBase):
         }
 
         lang = 'java'
-        code = open('./submission/java_unsafe.java').read()
+        code = self.read_content('./submission/java_unsafe.java')
         fingerprint = self.rand_str()
 
         self.submission = Submission(fingerprint, code, lang)

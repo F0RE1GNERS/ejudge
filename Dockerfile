@@ -22,7 +22,9 @@ RUN cp sandbox/java_policy /etc/ \
     && cd tests \
     && python3 test_sandbox.py \
     && python3 test_submission.py \
-    && python3 test_runner.py
+    && python3 test_runner.py \
+    && rm -rf /ejudge/run \
+    && mkdir -p run/data run/sub run/log
 VOLUME /ejudge
 EXPOSE 5000
 

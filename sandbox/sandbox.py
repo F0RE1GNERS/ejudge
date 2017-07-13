@@ -63,6 +63,11 @@ class Sandbox:
         self.uid = int(uid)
         self.gid = int(gid)
 
+    def __del__(self):
+        self.stdin.close()
+        self.stdout.close()
+        self.stderr.close()
+
     def set_resource_limit(self):
         if self.max_memory > 0:
             resource.setrlimit(resource.RLIMIT_AS, (int(self.max_memory * 2), int(self.max_memory * 2)))

@@ -3,6 +3,10 @@ import shutil
 import os
 import random
 import string
+import sys
+
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 
 class TestBase(TestCase):
 
@@ -36,4 +40,8 @@ class TestBase(TestCase):
 
     def output_content(self, path):
         with open(path, "r") as f:
+            return f.read()
+
+    def read_content(self, path, mode='r'):
+        with open(path, mode) as f:
             return f.read()
