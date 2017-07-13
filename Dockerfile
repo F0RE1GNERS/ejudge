@@ -15,7 +15,7 @@ WORKDIR /ejudge
 ENV LANG=en_US.UTF-8 LANGUAGE=en_US:en LC_ALL=en_US.UTF-8
 RUN cp sandbox/java_policy /etc/ \
     && mkdir -p run/data run/sub run/log \
-    && pip3 install -r requirements.txt
+    && pip3 install -r requirements.txt \
     && python3 setup.py build_ext --inplace \
     && chmod 600 config/* \
     && chmod +x run.sh \
