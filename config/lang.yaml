@@ -38,7 +38,7 @@ java:
   compiler_args: -d {workspace} -encoding utf8 {code_path}
   code_file: Main.java
   execute_file: /usr/bin/java
-  execute_args: -cp {workspace} -Xss1M -XX:MaxPermSize=16M -XX:PermSize=8M -Xms16M -Xmx{max_memory}M -Djava.security.manager -Dfile.encoding=UTF-8 -Djava.awt.headless=true Main
+  execute_args: -cp {workspace} -Xss1M -XX:MaxPermSize=16M -XX:PermSize=8M -Xms16M -Xmx{max_memory}M -Djava.security.manager -Dfile.encoding=UTF-8 -Djava.security.policy==/etc/java_policy -Djava.awt.headless=true Main
   execute_args_unsafe: -cp {workspace} Main
   memory_flag: MB
   seccomp_rule: java
@@ -46,19 +46,19 @@ java:
     MALLOC_ARENA_MAX: "1"
 py2:
   type: interpreter
-  code_file: "{code_path}"
+  code_file: foo.py
   execute_file: /usr/bin/python
   execute_args: "{code_path}"
   seccomp_rule: py
 python:
   type: interpreter
-  code_file: "{code_path}"
+  code_file: foo.py
   execute_file: /usr/bin/python3
   execute_args: "{code_path}"
   seccomp_rule: py
 pypy:
   type: interpreter
-  code_file: "{code_path}"
+  code_file: foo.py
   execute_file: /usr/bin/pypy
   execute_args: "{code_path}"
   seccomp_rule: py
@@ -88,3 +88,14 @@ js:
   execute_args: --max_old_space_size={max_memory} {code_path}
   seccomp_rule: js
   memory_flag: MB
+perl:
+  type: interpreter
+  code_file: foo.pl
+  execute_file: /usr/bin/perl
+  execute_args: "{code_path}"
+ocaml:
+  type: compiler
+  code_file: foo.ml
+  compiler_file: /usr/bin/ocamlc
+  compiler_args: "{code_path} -o {exe_path}"
+  execute_file: "{exe_path}"

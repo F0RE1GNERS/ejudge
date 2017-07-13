@@ -1,4 +1,5 @@
 import unittest
+import logging
 from unittest import TestCase
 
 from config.config import Verdict
@@ -10,6 +11,7 @@ from tests.test_base import TestBase
 class APlusBTest(TestBase):
 
     def setUp(self):
+        logging.basicConfig(level=logging.INFO)
         self.workspace = '/tmp/submission'
         super(APlusBTest, self).setUp()
 
@@ -67,6 +69,12 @@ class APlusBTest(TestBase):
         pass
 
     def test_pypy(self):
+        pass
+
+    def test_perl(self):
+        pass
+
+    def test_ocaml(self):
         pass
 
     def test_rs(self):

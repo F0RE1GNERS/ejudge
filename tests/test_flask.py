@@ -207,8 +207,8 @@ class FlaskTest(TestBase):
         case_fingerprints = [self.rand_str(True) for _ in range(31)]
         checker_dict = dict(fingerprint=checker_fingerprint, lang='cpp', code=open('./submission/ncmp.cpp').read())
         response = requests.post(self.url_base + "/upload/checker",
-                                 json=json.dumps(checker_dict), auth=self.token)
-        self.assertEqual(response.json()['status'], 'received')
+                                 json=json.dumps(checker_dict), auth=self.token).json()
+        self.assertEqual(response['status'], 'received')
 
         for i, fingerprint in enumerate(case_fingerprints):
             response = requests.post(self.url_base + '/upload/case/%s/input' % fingerprint,

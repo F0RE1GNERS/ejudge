@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 from functools import wraps
-from flask import Flask, render_template, request, Response, jsonify
+from flask import Flask, render_template, request, Response, jsonify, copy_current_request_context
 from flask_socketio import emit
 import yaml
 import json
@@ -12,6 +12,11 @@ from core.judge import TrustedSubmission
 from config.config import COMPILE_MAX_TIME_FOR_TRUSTED, TOKEN_FILE, custom_config
 from handler import flask_app, socketio, judge_handler, judge_handler_one, generate_handler, validate_handler
 from handler import reject_with_traceback, stress_handler
+
+
+@flask_app.route('/ping')
+def ping():
+    return Response("pong")
 
 
 def check_auth(username, password):
@@ -170,6 +175,8 @@ def judge():
 
 @socketio.on('judge')
 def handle_message(data):
+
+    @copy_current_request_context
     def on_raw_message(body):
         emit('judge_reply', body['result'])
 
