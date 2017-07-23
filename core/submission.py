@@ -146,7 +146,7 @@ class Submission(object):
 
         execute_args.extend(command_line_args)
 
-        if self.memory_flag == 'MB':
+        if self.memory_flag == 'MB' and max_memory > 0:
             execute_args = format(execute_args, as_list=True, max_memory=int(max_memory))
             self.env["MONO_GC_PARAMS"] = 'max-heap-size=%dM' % int(max_memory)
             max_memory = -1

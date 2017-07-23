@@ -112,7 +112,8 @@ def delete_trusted_submission(fid):
 def generate():
     data = json.loads(request.get_json())
     p = generate_handler.apply_async((data['fingerprint'], data['code'], data['lang'],
-                                      data['max_time'], data['max_memory'], data['command_line_args']))
+                                      data['max_time'], data['max_memory'], data['command_line_args']),
+                                     {'multiple': data.get("multiple", False)})
     return jsonify(p.get())
 
 
@@ -122,7 +123,8 @@ def generate():
 def validate():
     data = json.loads(request.get_json())
     p = validate_handler.apply_async((data['fingerprint'], data['code'], data['lang'],
-                                      data['max_time'], data['max_memory'], data['input']))
+                                      data['max_time'], data['max_memory'], data['input']),
+                                     {'multiple': data.get("multiple", False)})
     return jsonify(p.get())
 
 

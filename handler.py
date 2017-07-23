@@ -1,18 +1,19 @@
-from core.case import Case
-from core.judge import Checker, Interactor, Generator, Validator
-from core.submission import Submission
-from core.runner import CaseRunner, InteractiveRunner, RunnerResultType
-from core.exception import CompileError
-from core.util import random_string, serialize_sandbox_result
-from config.config import Verdict, TRACEBACK_LIMIT, SECRET_KEY, MAX_WORKER_NUMBER, MAX_TASKS_PER_CHILD
-
-from flask import Flask
-from celery import Celery
-from flask_socketio import SocketIO
 import base64
-import traceback
 import time
+import traceback
+from os import path
 
+from celery import Celery
+from flask import Flask
+from flask_socketio import SocketIO
+
+from config.config import Verdict, TRACEBACK_LIMIT, SECRET_KEY, MAX_WORKER_NUMBER, MAX_TASKS_PER_CHILD, OUTPUT_LIMIT
+from core.case import Case
+from core.exception import CompileError
+from core.judge import Checker, Interactor, Generator, Validator
+from core.runner import CaseRunner, InteractiveRunner, RunnerResultType
+from core.submission import Submission
+from core.util import random_string
 
 flask_app = Flask(__name__)
 flask_app.config['broker_url'] = 'redis://localhost:6379/0'
@@ -25,7 +26,7 @@ flask_app.config['worker_max_tasks_per_child'] = MAX_TASKS_PER_CHILD
 celery = Celery(flask_app.name, broker=flask_app.config['broker_url'])
 celery.conf.update(flask_app.config)
 
-socketio = SocketIO(flask_app, async_mode='eventlet', message_queue="redis://localhost:6379/0")
+socketio = SocketIO(flask_app, async_mode='eventlet')
 
 
 def reject_with_traceback():
@@ -86,7 +87,7 @@ def judge_handler(self,
 
 @celery.task
 def judge_handler_one(sub_dict, max_time, max_memory, case_input_b64, case_output_b64=None,
-                      target='result', checker_dict=None, interactor_dict=None):
+                      target='result', checker_dict=None, interactor_dict=None, multiple=False):
     """
     This function is built for admins to check problem status in multiple ways
 
@@ -106,6 +107,7 @@ def judge_handler_one(sub_dict, max_time, max_memory, case_input_b64, case_outpu
             target = RunnerResultType.FINAL
         elif target == 'output':
             target = RunnerResultType.OUTPUT
+            max_memory = -1  # no-restrict on memory for running output
         elif target == 'sandbox':
             target = RunnerResultType.SUB_SANDBOX_RESULT
         elif target == 'checker':
@@ -122,14 +124,38 @@ def judge_handler_one(sub_dict, max_time, max_memory, case_input_b64, case_outpu
             interactor = None
             case_runner = CaseRunner(submission, checker, max_time, max_memory)
 
-        case = Case(random_string())
-        case.write_input_binary(base64.b64decode(case_input_b64))
-        case.write_output_binary(base64.b64decode(case_output_b64) if case_output_b64 else b'')
         try:
-            result = case_runner.run(case, result_type=target)
-            result.update(status='received')
-            if result.get('verdict'):
-                result['verdict'] = result['verdict'].value
+            if multiple:
+                result_list = []
+                result_output_size = 0
+                for ind, input_binary in enumerate(case_input_b64):
+                    try:
+                        case = Case(random_string())
+                        case.write_input_binary(base64.b64decode(input_binary))
+                        try:
+                            output_binary = base64.b64decode(case_output_b64[ind])
+                        except:
+                            output_binary = b''
+                        case.write_output_binary(output_binary)
+                        result = case_runner.run(case, result_type=target)
+                        if result.get('verdict'):
+                            result['verdict'] = result['verdict'].value
+                        result_list.append(result)
+                        if target == RunnerResultType.OUTPUT:
+                            result_output_size += len(result['output'])
+                        if result_output_size > OUTPUT_LIMIT * 1024576:
+                            raise RuntimeError("Output limit exceeded")
+                    finally:
+                        case.clean()
+                result = {'status': 'received', 'result': result_list}
+            else:
+                case = Case(random_string())
+                case.write_input_binary(base64.b64decode(case_input_b64))
+                case.write_output_binary(base64.b64decode(case_output_b64) if case_output_b64 else b'')
+                result = case_runner.run(case, result_type=target)
+                result.update(status='received')
+                if result.get('verdict'):
+                    result['verdict'] = result['verdict'].value
         except CompileError as ce:
             if target == RunnerResultType.FINAL:
                 result = {'status': 'received', 'verdict': Verdict.COMPILE_ERROR.value, 'message': ce.detail}
@@ -153,15 +179,30 @@ def judge_handler_one(sub_dict, max_time, max_memory, case_input_b64, case_outpu
 @celery.task
 def generate_handler(gen_fingerprint, gen_code, gen_lang, max_time, max_memory, command_line_args, multiple=False):
     def get_b64_from_file(file_path):
-        return base64.b64encode(open(file_path, 'rb').read()).decode()
+        with open(file_path, 'rb') as fs:
+            return base64.b64encode(fs.read()).decode()
 
     try:
         generator = Generator(gen_fingerprint, gen_code, gen_lang)
         tmp_output = generator.make_a_file_to_write()
-        running_result = generator.generate(tmp_output, max_time, max_memory, command_line_args)
-        if running_result.verdict != Verdict.ACCEPTED:
-            raise RuntimeError("Generator failed to complete")
-        result = {'status': 'received', 'output': get_b64_from_file(tmp_output)}
+        # If multiple is True, command line args is a list of list, then a list of output will be produced
+        if multiple:
+            output_list = []
+            output_size = 0
+            for args in command_line_args:
+                running_result = generator.generate(tmp_output, max_time, max_memory, args)
+                if running_result.verdict != Verdict.ACCEPTED:
+                    raise RuntimeError("Generator failed to complete")
+                output_size += path.getsize(tmp_output)
+                if output_size > OUTPUT_LIMIT * 1024576:
+                    raise RuntimeError("Output limit exceeded")
+                output_list.append(get_b64_from_file(tmp_output))
+            result = {'status': 'received', 'output': output_list}
+        else:
+            running_result = generator.generate(tmp_output, max_time, max_memory, command_line_args)
+            if running_result.verdict != Verdict.ACCEPTED:
+                raise RuntimeError("Generator failed to complete")
+            result = {'status': 'received', 'output': get_b64_from_file(tmp_output)}
     except:
         result = reject_with_traceback()
     finally:
@@ -177,10 +218,19 @@ def validate_handler(val_fingerprint, val_code, val_lang, max_time, max_memory, 
     try:
         validator = Validator(val_fingerprint, val_code, val_lang)
         tmp_input = validator.make_a_file_to_write()
-        with open(tmp_input, 'wb') as fs:
-            fs.write(base64.b64decode(case_input_b64))
-        val_result = validator.validate(tmp_input, max_time, max_memory)
-        result = {'status': 'received', 'verdict': val_result.verdict.value, 'message': val_result.message}
+        if multiple:
+            result_list = []
+            for case in case_input_b64:
+                with open(tmp_input, 'wb') as fs:
+                    fs.write(base64.b64decode(case))
+                val_result = validator.validate(tmp_input, max_time, max_memory)
+                result_list.append({'verdict': val_result.verdict.value, 'message': val_result.message})
+            result = {'status': 'received', 'result': result_list}
+        else:
+            with open(tmp_input, 'wb') as fs:
+                fs.write(base64.b64decode(case_input_b64))
+            val_result = validator.validate(tmp_input, max_time, max_memory)
+            result = {'status': 'received', 'verdict': val_result.verdict.value, 'message': val_result.message}
     except:
         result = reject_with_traceback()
     finally:

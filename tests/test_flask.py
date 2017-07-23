@@ -9,6 +9,7 @@ import logging
 import base64
 import os
 import unittest
+import shutil
 from socketIO_client import SocketIO, LoggingNamespace
 import sys
 
@@ -100,6 +101,23 @@ class FlaskTest(TestBase):
         result = requests.post(self.url_base + '/validate', json=json.dumps(val_data), auth=self.token).json()
         self.assertEqual(Verdict.ACCEPTED.value, result['verdict'])
 
+        # multiple
+        command_line_args = [["10", "10", "20"]] + [["400", "400", "8000"], ["40", "40", "1500"]]
+        gen_data = {'fingerprint': fingerprint, 'lang': 'cpp', 'code': generator_code, 'max_time': 1, 'max_memory': 256,
+                    'command_line_args': command_line_args, 'multiple': True}
+        result = requests.post(self.url_base + '/generate', json=json.dumps(gen_data), auth=self.token).json()
+        output_b64 = result['output']
+        self.assertEqual(3, len(output_b64))
+        val_data = {'fingerprint': fingerprint, 'lang': 'cpp', 'code': validator_code, 'max_time': 1, 'max_memory': 256,
+                    'input': output_b64, 'multiple': True}
+        result = requests.post(self.url_base + '/validate', json=json.dumps(val_data), auth=self.token).json()
+        for res in result['result']:
+            self.assertEqual(Verdict.ACCEPTED.value, res['verdict'])
+        val_data = {'fingerprint': fingerprint, 'lang': 'cpp', 'code': validator_code, 'max_time': 1, 'max_memory': 256,
+                    'input': output_b64}
+        result = requests.post(self.url_base + '/validate', json=json.dumps(val_data), auth=self.token).json()
+        self.assertEqual('reject', result['status'])
+
     def test_generate_fail(self):
         generator_code = self.read_content('./gen-and-val/gen-bipartite-graph.cpp')
         # 1 <= n, m <= 400, 0 <= k <= n * m
@@ -181,6 +199,45 @@ class FlaskTest(TestBase):
         # result
         result = requests.post(self.url_base + '/judge/checker', json=json.dumps(data), auth=self.token).json()
         self.assertEqual(Verdict.ACCEPTED.value, result['verdict'])
+
+    def test_judge_one_multiple(self):
+        checker_fingerprint, std_fingerprint = \
+            self.rand_str(True), self.rand_str(True)
+        input_b64 = list(map(lambda x: base64.b64encode(x).decode(), [b'1 2', b'3 4']))
+        output_b64 = list(map(lambda x: base64.b64encode(x).decode(), [b'3', b'7']))
+        sub_dict = dict(fingerprint=std_fingerprint, lang='cpp', code=self.read_content('./submission/aplusb.cpp'))
+        checker_dict = dict(fingerprint=checker_fingerprint, lang='cpp', code=self.read_content('./submission/ncmp.cpp'))
+        data = dict(submission=sub_dict, max_time=1, max_memory=128, input=input_b64, multiple=True)
+        shutil.rmtree(DATA_BASE)
+        os.makedirs(DATA_BASE)
+
+        # output
+        result = requests.post(self.url_base + '/judge/output', json=json.dumps(data), auth=self.token).json()
+        self.assertEqual('7', base64.b64decode(result['result'][1]['output']).decode().strip())
+
+        # sandbox
+        result = requests.post(self.url_base + '/judge/sandbox', json=json.dumps(data), auth=self.token).json()
+        self.assertEqual(0, result['result'][0]['verdict'])
+
+        # checker
+        data.update(checker=checker_dict, output=output_b64)
+        result = requests.post(self.url_base + '/judge/checker', json=json.dumps(data), auth=self.token).json()
+        self.assertEqual(Verdict.ACCEPTED.value, result['result'][0]['verdict'])
+        self.assertEqual("1 number(s): \"7\"", result['result'][1]['message'])
+
+        # result
+        result = requests.post(self.url_base + '/judge/checker', json=json.dumps(data), auth=self.token).json()
+        self.assertEqual(Verdict.ACCEPTED.value, result['result'][1]['verdict'])
+
+        # make sure it is clean
+        self.assertEqual([], list(os.listdir(DATA_BASE)))
+
+        # clean even when something went wrong
+        sub_dict = dict(fingerprint=std_fingerprint, lang='cpp', code=self.read_content('./submission/aplusb-ce.c'))
+        data = dict(submission=sub_dict, max_time=1, max_memory=128, input=input_b64, multiple=True)
+        result = requests.post(self.url_base + '/judge/output', json=json.dumps(data), auth=self.token).json()
+        self.assertEqual('reject', result['status'])
+        self.assertEqual([], list(os.listdir(DATA_BASE)))
 
     def test_judge_one_interactor(self):
         checker_fingerprint, std_fingerprint, interactor_fingerprint = \

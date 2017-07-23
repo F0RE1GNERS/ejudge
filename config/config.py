@@ -54,6 +54,7 @@ COMPILE_TIME_FACTOR = 10  # compile time limit is 10 times max time limit
 REAL_TIME_FACTOR = 3  # real time limit is 2 times max time limit
 MAX_WORKER_NUMBER = max(cpu_count() // 4, 1)
 MAX_TASKS_PER_CHILD = 10
+OUTPUT_LIMIT = 256
 SECRET_KEY = 'secret!'
 
 

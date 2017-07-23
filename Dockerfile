@@ -29,5 +29,4 @@ RUN useradd -r compiler \
 VOLUME /ejudge
 EXPOSE 5000
 
-HEALTHCHECK --interval=30s --retries=3 CMD curl http://localhost:5000/ping
 CMD ./run.sh
