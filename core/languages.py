@@ -40,5 +40,23 @@ LANGUAGE_SETTINGS = {
         "exe_cmd": "/usr/bin/python3 {exe_path}",
         "seccomp_rule": "general",
         "env": [] + _DEFAULT_ENV
+    },
+    'py2': {
+        "src_name": "solution.py",
+        "exe_name": "solution.py",
+        "max_memory": 128 * 1024 * 1024,
+        "compile_cmd": "/usr/bin/python -m py_compile {src_path}",
+        "exe_cmd": "/usr/bin/python {exe_path}",
+        "seccomp_rule": "general",
+        "env": [] + _DEFAULT_ENV
+    },
+    'pas': {
+        "src_name": "main.pas",
+        "exe_name": "main",
+        "max_memory": 128 * 1024 * 1204,
+        "compile_cmd": "/usr/bin/fpc -O2 -o{exe_path} {src_path}",
+        "exe_cmd": "{exe_path}",
+        "seccomp_rule": "general",
+        "env": [] + _DEFAULT_ENV
     }
 }
