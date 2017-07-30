@@ -77,7 +77,7 @@ def upload_case(fid, io):
 @auth_required
 @with_traceback_on_err
 def upload_trusted_submission():
-    data = json.loads(request.get_json())
+    data = request.get_json()
     program = TrustedSubmission(data['fingerprint'], data['code'], data['lang'], permanent=True)
     if program.to_compile:
         program.compile(COMPILE_MAX_TIME_FOR_TRUSTED)
@@ -110,7 +110,7 @@ def delete_trusted_submission(fid):
 @auth_required
 @with_traceback_on_err
 def generate():
-    data = json.loads(request.get_json())
+    data = request.get_json()
     p = generate_handler.apply_async((data['fingerprint'], data['code'], data['lang'],
                                       data['max_time'], data['max_memory'], data['command_line_args']),
                                      {'multiple': data.get("multiple", False)})
@@ -121,7 +121,7 @@ def generate():
 @auth_required
 @with_traceback_on_err
 def validate():
-    data = json.loads(request.get_json())
+    data = request.get_json()
     p = validate_handler.apply_async((data['fingerprint'], data['code'], data['lang'],
                                       data['max_time'], data['max_memory'], data['input']),
                                      {'multiple': data.get("multiple", False)})
@@ -132,7 +132,7 @@ def validate():
 @auth_required
 @with_traceback_on_err
 def stress():
-    data = json.loads(request.get_json())
+    data = request.get_json()
     if len(data['command_line_args_list']) < 1:
         raise ValueError("Must have at least one command line argument")
     args = (data.pop('std'), data.pop('submission'), data.pop('generator'), data.pop('command_line_args_list'),
@@ -147,7 +147,7 @@ def stress():
 @auth_required
 @with_traceback_on_err
 def judge_one(target):
-    data = json.loads(request.get_json())
+    data = request.get_json()
     args = (data.pop('submission'), data.pop('max_time'), data.pop('max_memory'), data.pop('input'))
     data['target'] = target
     if data.get('output'):
@@ -168,7 +168,7 @@ def judge():
     def on_raw_message(body):
         logging.info(body)
 
-    data = json.loads(request.get_json())
+    data = request.get_json()
     p = judge_handler.apply_async((data['fingerprint'], data['code'], data['lang'], data['cases'],
                                    data['max_time'], data['max_memory'], data['checker']),
                                   {'interactor_fingerprint': data.get('interactor'),

@@ -1,0 +1,20 @@
+{
+  "lang": "cpp",
+  "fingerprint": "83yt5DhyPiBS2oXQnp2KtXQv",
+  "input": [
+    "MSAzIDMzMyAzMzMzCg==",
+    "MQo=",
+    "MSAyCg==",
+    "MTEgMgo=",
+    "NSA2Cg==",
+    "MyA2Cg==",
+    "MwoxIDIgMwo=",
+    "aGVsbG8==",
+    "aGVsbG8==",
+    "MSAyIDMK"
+  ],
+  "max_memory": -1,
+  "max_time": 1.0,
+  "multiple": true,
+  "code": "/**\n * Validates that the first line contains the integer between 1 and 10^5, inclusive.\n * The second line should contains space-separated sequence of integers between -10^15 and 10^15, inclusive.\n * Also validates that file ends with EOLN and EOF.\n */\n\n#include \"testlib.h\"\n\nusing namespace std;\n\nint main(int argc, char* argv[])\n{\n    registerValidation(argc, argv);\n    \n    int n = inf.readInt(1, 100000, \"n\");\n    inf.readEoln();\n\n    for (int i = 0; i < n; i++)\n    {\n        inf.readLong(-1000000000000000LL, 1000000000000000LL, format(\"a[%d]\", i + 1));\n\n        if (i + 1 < n)\n            inf.readSpace();\n    }\n    inf.readEoln();\n\n    inf.readEof();\n    return 0;\n}\n"
+}

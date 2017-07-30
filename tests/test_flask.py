@@ -12,6 +12,7 @@ import unittest
 import shutil
 from socketIO_client import SocketIO, LoggingNamespace
 import sys
+import time
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -62,7 +63,7 @@ class FlaskTest(TestBase):
     def test_upload_checker_fail(self):
         fingerprint = 'test_%s' % self.rand_str()
         json_data = {'fingerprint': fingerprint, 'code': 'code', 'lang': 'cpp'}
-        result = requests.post(self.url_base + '/upload/checker', json=json.dumps(json_data),
+        result = requests.post(self.url_base + '/upload/checker', json=json_data,
                                auth=self.token).json()
         self.assertEqual('reject', result['status'])
         self.assertIn("CompileError", result['message'])
@@ -70,7 +71,7 @@ class FlaskTest(TestBase):
     def test_upload_interactor_with_delete(self):
         fingerprint = 'test_%s' % self.rand_str()
         json_data = {'fingerprint': fingerprint, 'code': self.read_content('./interact/interactor-a-plus-b.cpp', 'r'), 'lang': 'cpp'}
-        result = requests.post(self.url_base + '/upload/checker', json=json.dumps(json_data),
+        result = requests.post(self.url_base + '/upload/checker', json=json_data,
                                auth=self.token).json()
         self.assertEqual('received', result['status'])
         self.assertIn(fingerprint, os.listdir(SUB_BASE))
@@ -91,31 +92,31 @@ class FlaskTest(TestBase):
         fingerprint = 'test_%s' % self.rand_str()
         gen_data = {'fingerprint': fingerprint, 'lang': 'cpp', 'code': generator_code, 'max_time': 1, 'max_memory': 256,
                     'command_line_args': ["10", "10", "20"]}
-        result = requests.post(self.url_base + '/generate', json=json.dumps(gen_data), auth=self.token).json()
+        result = requests.post(self.url_base + '/generate', json=gen_data, auth=self.token).json()
         output_b64 = result['output']
         self.assertEqual(22, len(base64.b64decode(output_b64).decode().split('\n')))
         self.assertNotIn(fingerprint, os.listdir(SUB_BASE))
 
         val_data = {'fingerprint': fingerprint, 'lang': 'cpp', 'code': validator_code, 'max_time': 1, 'max_memory': 256,
                     'input': output_b64}
-        result = requests.post(self.url_base + '/validate', json=json.dumps(val_data), auth=self.token).json()
+        result = requests.post(self.url_base + '/validate', json=val_data, auth=self.token).json()
         self.assertEqual(Verdict.ACCEPTED.value, result['verdict'])
 
         # multiple
         command_line_args = [["10", "10", "20"]] + [["400", "400", "8000"], ["40", "40", "1500"]]
         gen_data = {'fingerprint': fingerprint, 'lang': 'cpp', 'code': generator_code, 'max_time': 1, 'max_memory': 256,
                     'command_line_args': command_line_args, 'multiple': True}
-        result = requests.post(self.url_base + '/generate', json=json.dumps(gen_data), auth=self.token).json()
+        result = requests.post(self.url_base + '/generate', json=gen_data, auth=self.token).json()
         output_b64 = result['output']
         self.assertEqual(3, len(output_b64))
         val_data = {'fingerprint': fingerprint, 'lang': 'cpp', 'code': validator_code, 'max_time': 1, 'max_memory': 256,
                     'input': output_b64, 'multiple': True}
-        result = requests.post(self.url_base + '/validate', json=json.dumps(val_data), auth=self.token).json()
+        result = requests.post(self.url_base + '/validate', json=val_data, auth=self.token).json()
         for res in result['result']:
             self.assertEqual(Verdict.ACCEPTED.value, res['verdict'])
         val_data = {'fingerprint': fingerprint, 'lang': 'cpp', 'code': validator_code, 'max_time': 1, 'max_memory': 256,
                     'input': output_b64}
-        result = requests.post(self.url_base + '/validate', json=json.dumps(val_data), auth=self.token).json()
+        result = requests.post(self.url_base + '/validate', json=val_data, auth=self.token).json()
         self.assertEqual('reject', result['status'])
 
     def test_generate_fail(self):
@@ -124,7 +125,7 @@ class FlaskTest(TestBase):
         fingerprint = 'test_%s' % self.rand_str()
         gen_data = {'fingerprint': fingerprint, 'lang': 'cpp', 'code': generator_code, 'max_time': 1, 'max_memory': 256,
                     'command_line_args': ["10", "10", "300"]}
-        result = requests.post(self.url_base + '/generate', json=json.dumps(gen_data), auth=self.token).json()
+        result = requests.post(self.url_base + '/generate', json=gen_data, auth=self.token).json()
         self.assertEqual("reject", result['status'])
 
     def test_validate_fail(self):
@@ -132,7 +133,7 @@ class FlaskTest(TestBase):
         validator_code = self.read_content('./gen-and-val/bipartite-graph-validator.cpp')
         val_data = {'fingerprint': fingerprint, 'lang': 'cpp', 'code': validator_code, 'max_time': 1, 'max_memory': 256,
                     'input': base64.b64encode(b"1 2 3").decode()}
-        result = requests.post(self.url_base + '/validate', json=json.dumps(val_data), auth=self.token).json()
+        result = requests.post(self.url_base + '/validate', json=val_data, auth=self.token).json()
         self.assertEqual(Verdict.WRONG_ANSWER.value, result['verdict'])
 
     def test_stress(self):
@@ -145,7 +146,7 @@ class FlaskTest(TestBase):
 
         stress_data = dict(std=std_dict, submission=sub_dict, generator=gen_dict, command_line_args_list=[[]],
                            max_time=1, max_memory=128, max_sum_time=20, checker=checker_dict)
-        result = requests.post(self.url_base + '/stress', json=json.dumps(stress_data), auth=self.token).json()
+        result = requests.post(self.url_base + '/stress', json=stress_data, auth=self.token).json()
         for out in result['output']:
             self.assertTrue(int(base64.b64decode(out).decode().split(' ')[0]) % 2 == 0)
 
@@ -153,7 +154,7 @@ class FlaskTest(TestBase):
         sub_dict = dict(fingerprint=sub_fingerprint, lang='java', code=self.read_content('./submission/aplusb.java'))
         stress_data = dict(std=std_dict, submission=sub_dict, generator=gen_dict, command_line_args_list=[[]],
                            max_time=1, max_memory=128, max_sum_time=15, checker=checker_dict)
-        result = requests.post(self.url_base + '/stress', json=json.dumps(stress_data), auth=self.token).json()
+        result = requests.post(self.url_base + '/stress', json=stress_data, auth=self.token).json()
         self.assertFalse(result['output'])
 
     def test_stress_interactor(self):
@@ -170,7 +171,7 @@ class FlaskTest(TestBase):
         stress_data = dict(std=std_dict, submission=sub_dict, generator=gen_dict, command_line_args_list=[[]],
                            max_time=1, max_memory=128, max_sum_time=20, checker=checker_dict, interactor=inter_dict,
                            max_generate=10)
-        result = requests.post(self.url_base + '/stress', json=json.dumps(stress_data), auth=self.token).json()
+        result = requests.post(self.url_base + '/stress', json=stress_data, auth=self.token).json()
         self.assertGreaterEqual(10, len(result['output']))
 
     def test_judge_one(self):
@@ -183,21 +184,21 @@ class FlaskTest(TestBase):
         data = dict(submission=sub_dict, max_time=1, max_memory=128, input=input_b64)
 
         # output
-        result = requests.post(self.url_base + '/judge/output', json=json.dumps(data), auth=self.token).json()
+        result = requests.post(self.url_base + '/judge/output', json=data, auth=self.token).json()
         self.assertEqual('3', base64.b64decode(result['output']).decode().strip())
 
         # sandbox
-        result = requests.post(self.url_base + '/judge/sandbox', json=json.dumps(data), auth=self.token).json()
+        result = requests.post(self.url_base + '/judge/sandbox', json=data, auth=self.token).json()
         self.assertEqual(0, result['verdict'])
 
         # checker
         data.update(checker=checker_dict, output=output_b64)
-        result = requests.post(self.url_base + '/judge/checker', json=json.dumps(data), auth=self.token).json()
+        result = requests.post(self.url_base + '/judge/checker', json=data, auth=self.token).json()
         self.assertEqual(Verdict.ACCEPTED.value, result['verdict'])
         self.assertEqual("1 number(s): \"3\"", result['message'])
 
         # result
-        result = requests.post(self.url_base + '/judge/checker', json=json.dumps(data), auth=self.token).json()
+        result = requests.post(self.url_base + '/judge/checker', json=data, auth=self.token).json()
         self.assertEqual(Verdict.ACCEPTED.value, result['verdict'])
 
     def test_judge_one_multiple(self):
@@ -212,21 +213,21 @@ class FlaskTest(TestBase):
         os.makedirs(DATA_BASE)
 
         # output
-        result = requests.post(self.url_base + '/judge/output', json=json.dumps(data), auth=self.token).json()
+        result = requests.post(self.url_base + '/judge/output', json=data, auth=self.token).json()
         self.assertEqual('7', base64.b64decode(result['result'][1]['output']).decode().strip())
 
         # sandbox
-        result = requests.post(self.url_base + '/judge/sandbox', json=json.dumps(data), auth=self.token).json()
+        result = requests.post(self.url_base + '/judge/sandbox', json=data, auth=self.token).json()
         self.assertEqual(0, result['result'][0]['verdict'])
 
         # checker
         data.update(checker=checker_dict, output=output_b64)
-        result = requests.post(self.url_base + '/judge/checker', json=json.dumps(data), auth=self.token).json()
+        result = requests.post(self.url_base + '/judge/checker', json=data, auth=self.token).json()
         self.assertEqual(Verdict.ACCEPTED.value, result['result'][0]['verdict'])
         self.assertEqual("1 number(s): \"7\"", result['result'][1]['message'])
 
         # result
-        result = requests.post(self.url_base + '/judge/checker', json=json.dumps(data), auth=self.token).json()
+        result = requests.post(self.url_base + '/judge/checker', json=data, auth=self.token).json()
         self.assertEqual(Verdict.ACCEPTED.value, result['result'][1]['verdict'])
 
         # make sure it is clean
@@ -235,7 +236,7 @@ class FlaskTest(TestBase):
         # clean even when something went wrong
         sub_dict = dict(fingerprint=std_fingerprint, lang='cpp', code=self.read_content('./submission/aplusb-ce.c'))
         data = dict(submission=sub_dict, max_time=1, max_memory=128, input=input_b64, multiple=True)
-        result = requests.post(self.url_base + '/judge/output', json=json.dumps(data), auth=self.token).json()
+        result = requests.post(self.url_base + '/judge/output', json=data, auth=self.token).json()
         self.assertEqual('reject', result['status'])
         self.assertEqual([], list(os.listdir(DATA_BASE)))
 
@@ -250,17 +251,17 @@ class FlaskTest(TestBase):
         data = dict(submission=sub_dict, max_time=1, max_memory=128, input=input_b64, interactor=interactor_dict)
 
         # interactor
-        result = requests.post(self.url_base + '/judge/interactor', json=json.dumps(data), auth=self.token).json()
+        result = requests.post(self.url_base + '/judge/interactor', json=data, auth=self.token).json()
         self.assertEqual("1 queries processed", result['message'])
 
         # checker
         data.update(checker=checker_dict, output=output_b64)
-        result = requests.post(self.url_base + '/judge/checker', json=json.dumps(data), auth=self.token).json()
+        result = requests.post(self.url_base + '/judge/checker', json=data, auth=self.token).json()
         self.assertEqual(Verdict.ACCEPTED.value, result['verdict'])
         self.assertEqual("1 number(s): \"3\"", result['message'])
 
         # result
-        result = requests.post(self.url_base + '/judge/checker', json=json.dumps(data), auth=self.token).json()
+        result = requests.post(self.url_base + '/judge/checker', json=data, auth=self.token).json()
         self.assertEqual(Verdict.ACCEPTED.value, result['verdict'])
 
     def judge_aplusb(self, code, lang, socket=True):
@@ -268,7 +269,7 @@ class FlaskTest(TestBase):
         case_fingerprints = [self.rand_str(True) for _ in range(31)]
         checker_dict = dict(fingerprint=checker_fingerprint, lang='cpp', code=self.read_content('./submission/ncmp.cpp'))
         response = requests.post(self.url_base + "/upload/checker",
-                                 json=json.dumps(checker_dict), auth=self.token).json()
+                                 json=checker_dict, auth=self.token).json()
         self.assertEqual(response['status'], 'received')
 
         for i, fingerprint in enumerate(case_fingerprints):
@@ -304,7 +305,7 @@ class FlaskTest(TestBase):
                 while not result:
                     socketIO.wait(seconds=1)
         else:
-            result = requests.post(self.url_base + '/judge', json=json.dumps(judge_upload),
+            result = requests.post(self.url_base + '/judge', json=judge_upload,
                                    auth=self.token).json()
         logging.warning(result)
         return result['verdict']
@@ -328,6 +329,16 @@ class FlaskTest(TestBase):
             socketIO.emit('judge', dict())
             socketIO.once('judge_reply', callback)
             socketIO.wait(seconds=1)
+
+    def test_speed_val(self):
+        start = time.time()
+        result = requests.post(self.url_base + '/validate',
+                               json=json.loads(self.read_content('./gen-and-val/speed-test.json')),
+                               auth=self.token).json()
+        print(result)
+        end = time.time()
+        self.assertLess(end - start, 10)
+        self.assertEqual('received', result['status'])
 
 
 if __name__ == '__main__':
