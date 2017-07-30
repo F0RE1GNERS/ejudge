@@ -79,8 +79,7 @@ def upload_case(fid, io):
 def upload_trusted_submission():
     data = request.get_json()
     program = TrustedSubmission(data['fingerprint'], data['code'], data['lang'], permanent=True)
-    if program.to_compile:
-        program.compile(COMPILE_MAX_TIME_FOR_TRUSTED)
+    program.compile(COMPILE_MAX_TIME_FOR_TRUSTED)
     return response_ok()
 
 
