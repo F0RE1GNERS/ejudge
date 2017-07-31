@@ -12,6 +12,7 @@ DATA_BASE = path.join(_RUN_BASE, 'data')
 SUB_BASE = path.join(_RUN_BASE, 'sub')
 LIB_BASE = path.abspath(path.join(_RUN_BASE, '../lib'))
 TOKEN_FILE = path.join(_CONFIG_BASE, 'token.yaml')
+CUSTOM_FILE = path.join(_CONFIG_BASE, 'custom.yaml')
 
 with open(path.join(_CONFIG_BASE, 'lang.yaml')) as language_config:
     LANGUAGE_CONFIG = yaml.load(language_config.read())
@@ -58,8 +59,11 @@ OUTPUT_LIMIT = 256
 SECRET_KEY = 'secret!'
 
 
-with open(path.join(_CONFIG_BASE, 'custom.yaml')) as config_file:
-    custom_config = yaml.load(config_file.read())
-    for key, val in custom_config.items():
-        if val and key in globals().keys():  # if not empty
-            globals()[key] = val
+with open(CUSTOM_FILE) as config_file:
+    try:
+        custom_config = yaml.load(config_file.read())
+        for key, val in custom_config.items():
+            if val and key in globals().keys():  # if not empty
+                globals()[key] = val
+    except:
+        pass

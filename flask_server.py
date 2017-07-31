@@ -1,15 +1,16 @@
 #!/usr/bin/env python3
 
-from functools import wraps
-from flask import Flask, render_template, request, Response, jsonify, copy_current_request_context
-from flask_socketio import emit
-import yaml
-import json
 import logging
+from functools import wraps
+from os import path
 
+import yaml
+from flask import request, Response, jsonify, copy_current_request_context
+from flask_socketio import emit
+
+from config.config import COMPILE_MAX_TIME_FOR_TRUSTED, TOKEN_FILE, CUSTOM_FILE
 from core.case import Case
 from core.judge import TrustedSubmission
-from config.config import COMPILE_MAX_TIME_FOR_TRUSTED, TOKEN_FILE, custom_config
 from handler import flask_app, socketio, judge_handler, judge_handler_one, generate_handler, validate_handler
 from handler import reject_with_traceback, stress_handler
 
@@ -54,6 +55,38 @@ def with_traceback_on_err(f):
     return decorated
 
 
+@flask_app.route('/config/token', methods=['POST'])
+@auth_required
+@with_traceback_on_err
+def update_token():
+    data = request.get_json()
+    with open(TOKEN_FILE) as token_fs:
+        tokens = yaml.load(token_fs.read())
+    tokens['password'] = data['token']
+    with open(TOKEN_FILE, 'w') as token_fs:
+        yaml.dump(tokens, token_fs, default_flow_style=False)
+    return response_ok()
+
+
+@flask_app.route('/config/custom', methods=['GET', 'POST'])
+@auth_required
+@with_traceback_on_err
+def trace_custom_config():
+    if request.method == 'GET':
+        with open(CUSTOM_FILE) as fs:
+            return fs.read()
+    else:
+        with open(CUSTOM_FILE, 'wb') as fs:
+            fs.write(request.data)
+        return response_ok()
+
+
+@flask_app.route('/exist/case/<fid>')
+def case_exist(fid):
+    case = Case(fid)
+    return jsonify({'exist': path.exists(case.input_file) and path.exists(case.output_file)})
+
+
 @flask_app.route('/upload/case/<fid>/<io>', methods=['POST'])
 @auth_required
 @with_traceback_on_err
@@ -79,7 +112,8 @@ def upload_case(fid, io):
 def upload_trusted_submission():
     data = request.get_json()
     program = TrustedSubmission(data['fingerprint'], data['code'], data['lang'], permanent=True)
-    program.compile(COMPILE_MAX_TIME_FOR_TRUSTED)
+    if data.get('force') or program.to_compile:
+        program.compile(COMPILE_MAX_TIME_FOR_TRUSTED)
     return response_ok()
 
 
