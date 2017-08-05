@@ -1,18 +1,19 @@
 #!/usr/bin/env python3
 
 import logging
+import json
+import threading
 from functools import wraps
 from os import path
 
 import yaml
-from flask import request, Response, jsonify, copy_current_request_context
-from flask_socketio import emit
+from flask import request, Response, jsonify
 
-from config.config import COMPILE_MAX_TIME_FOR_TRUSTED, TOKEN_FILE, CUSTOM_FILE
+from config.config import COMPILE_MAX_TIME_FOR_TRUSTED, TOKEN_FILE, CUSTOM_FILE, Verdict
 from core.case import Case
 from core.judge import TrustedSubmission
-from handler import flask_app, socketio, judge_handler, judge_handler_one, generate_handler, validate_handler
-from handler import reject_with_traceback, stress_handler
+from handler import flask_app, judge_handler, judge_handler_one, generate_handler, validate_handler
+from handler import reject_with_traceback, stress_handler, redis_db
 
 
 @flask_app.route('/ping')
@@ -40,8 +41,9 @@ def auth_required(f):
     return decorated
 
 
-def response_ok():
-    return jsonify({'status': 'received'})
+def response_ok(**kwargs):
+    kwargs.update(status='received')
+    return jsonify(kwargs)
 
 
 def with_traceback_on_err(f):
@@ -197,33 +199,35 @@ def judge_one(target):
 @auth_required
 @with_traceback_on_err
 def judge():
+    data = request.get_json()
+    hold = data.get('hold', True)
+    fingerprint = data['fingerprint']
+
     """This is the http version of judge, used in retry"""
     def on_raw_message(body):
-        logging.info(body)
+        redis_db.set(fingerprint, json.dumps(body['result']), ex=3600)
 
+    p = judge_handler.apply_async((fingerprint, data['code'], data['lang'], data['cases'],
+                                   data['max_time'], data['max_memory'], data['checker']),
+                                  {'interactor_fingerprint': data.get('interactor'),
+                                   'run_until_complete': data.get('run_until_complete', False), })
+    if hold:
+        return jsonify(p.get())
+    else:
+        redis_db.set(fingerprint, json.dumps({'verdict': Verdict.WAITING.value}), ex=3600)
+        threading.Thread(target=p.get, kwargs={'on_message': on_raw_message}).start()
+        return response_ok()
+
+
+@flask_app.route('/query', methods=['GET'])
+@auth_required
+@with_traceback_on_err
+def query():
     data = request.get_json()
-    p = judge_handler.apply_async((data['fingerprint'], data['code'], data['lang'], data['cases'],
-                                   data['max_time'], data['max_memory'], data['checker']),
-                                  {'interactor_fingerprint': data.get('interactor'),
-                                   'run_until_complete': data.get('run_until_complete', False), })
-    return jsonify(p.get(on_message=on_raw_message))
-
-
-@socketio.on('judge')
-def handle_message(data):
-
-    @copy_current_request_context
-    def on_raw_message(body):
-        emit('judge_reply', body['result'])
-
-    if not check_auth(data.get('username'), data.get('password')):
-        return authorization_failed()
-    p = judge_handler.apply_async((data['fingerprint'], data['code'], data['lang'], data['cases'],
-                                   data['max_time'], data['max_memory'], data['checker']),
-                                  {'interactor_fingerprint': data.get('interactor'),
-                                   'run_until_complete': data.get('run_until_complete', False), })
-    return jsonify(p.get(on_message=on_raw_message))
+    fingerprint = data['fingerprint']
+    status = response_ok(**json.loads(redis_db.get(fingerprint).decode()))
+    return status
 
 
 if __name__ == '__main__':
-    socketio.run(flask_app, host='0.0.0.0', port=5000)
+    flask_app.run(host='0.0.0.0', port=5000)

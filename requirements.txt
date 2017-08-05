@@ -6,9 +6,6 @@ gunicorn
 gevent
 requests
 flask
-flask-socketio
-python-socketio
-socketio-client
 celery
 eventlet
 redis

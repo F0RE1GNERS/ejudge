@@ -11,5 +11,5 @@ service redis-server start
 celery multi start worker -A handler \
     --pidfile="/ejudge/run/log/celery-%n.pid" \
     --logfile="/ejudge/run/log/celery-%n%I.log"
-gunicorn flask_server:flask_app --workers $n --error-logfile /ejudge/run/log/gunicorn.log \
-    --timeout 600 --worker-class eventlet --log-level warning --bind 0.0.0.0:5000
+gunicorn flask_server:flask_app --workers $n --worker-connections 1000 --error-logfile /ejudge/run/log/gunicorn.log \
+    --timeout 600 --worker-class gevent --log-level warning --bind 0.0.0.0:5000

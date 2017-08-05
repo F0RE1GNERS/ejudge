@@ -10,7 +10,6 @@ import base64
 import os
 import unittest
 import shutil
-from socketIO_client import SocketIO, LoggingNamespace
 import sys
 import time
 
@@ -264,7 +263,7 @@ class FlaskTest(TestBase):
         result = requests.post(self.url_base + '/judge/checker', json=data, auth=self.token).json()
         self.assertEqual(Verdict.ACCEPTED.value, result['verdict'])
 
-    def judge_aplusb(self, code, lang, socket=True):
+    def judge_aplusb(self, code, lang, hold=True):
         checker_fingerprint = self.rand_str(True)
         case_fingerprints = [self.rand_str(True) for _ in range(31)]
         checker_dict = dict(fingerprint=checker_fingerprint, lang='cpp', code=self.read_content('./submission/ncmp.cpp'))
@@ -284,26 +283,13 @@ class FlaskTest(TestBase):
                             cases=case_fingerprints, max_time=1, max_memory=128, checker=checker_fingerprint,
                             )
 
-        if socket:
-            judge_upload.update(username=self.token[0], password=self.token[1])
-            news_length = 0
-            result = None
-
-            def callback(*args):
-                nonlocal news_length, result, self
-                body = args[0]
-                if body.get('verdict') != Verdict.JUDGING.value:
-                    result = body
-                else:
-                    detail = body.get('detail')
-                    self.assertEqual(news_length + 1, len(detail))
-                    news_length = len(detail)
-
-            with SocketIO('localhost', 5000, LoggingNamespace) as socketIO:
-                socketIO.emit('judge', judge_upload)
-                socketIO.on('judge_reply', callback)
-                while not result:
-                    socketIO.wait(seconds=1)
+        if not hold:
+            judge_upload.update(hold=False)
+            response = requests.post(self.url_base + '/judge', json=judge_upload, auth=self.token).json()
+            self.assertEqual('received', response['status'])
+            time.sleep(10)
+            result = requests.get(self.url_base + '/query', json={'fingerprint': judge_upload['fingerprint']},
+                                  auth=self.token).json()
         else:
             result = requests.post(self.url_base + '/judge', json=judge_upload,
                                    auth=self.token).json()
@@ -319,16 +305,6 @@ class FlaskTest(TestBase):
 
     def test_aplusb_judge_wa(self):
         self.assertEqual(self.judge_aplusb(self.read_content('./submission/aplusb-wrong.py'), 'python'), Verdict.WRONG_ANSWER.value)
-
-    def test_socket_fail_auth(self):
-        def callback(*args):
-            nonlocal self
-            self.assertEqual(args[0].get('status'), 'reject')
-
-        with SocketIO('localhost', 5000, LoggingNamespace) as socketIO:
-            socketIO.emit('judge', dict())
-            socketIO.once('judge_reply', callback)
-            socketIO.wait(seconds=1)
 
     def test_speed_val(self):
         start = time.time()

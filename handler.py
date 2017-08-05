@@ -3,9 +3,9 @@ import time
 import traceback
 from os import path
 
+import redis
 from celery import Celery
 from flask import Flask
-from flask_socketio import SocketIO
 
 from config.config import Verdict, TRACEBACK_LIMIT, SECRET_KEY, MAX_WORKER_NUMBER, MAX_TASKS_PER_CHILD, OUTPUT_LIMIT
 from core.case import Case
@@ -26,7 +26,7 @@ flask_app.config['worker_max_tasks_per_child'] = MAX_TASKS_PER_CHILD
 celery = Celery(flask_app.name, broker=flask_app.config['broker_url'])
 celery.conf.update(flask_app.config)
 
-socketio = SocketIO(flask_app, async_mode='eventlet')
+redis_db = redis.StrictRedis(host='localhost', port=6379, db=1)
 
 
 def reject_with_traceback():
