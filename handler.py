@@ -78,11 +78,11 @@ def judge_handler(self,
     except:
         response = reject_with_traceback()
     finally:
+        cache.set(sub_fingerprint, response, timeout=3600)
         try:
             submission.clean()
         except NameError:
             pass
-    cache.set(sub_fingerprint, response, timeout=3600)
     return response
 
 

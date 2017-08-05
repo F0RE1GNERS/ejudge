@@ -2,6 +2,7 @@
 
 import logging
 import json
+import time
 import threading
 from functools import wraps
 from os import path
@@ -203,6 +204,7 @@ def judge():
     hold = data.get('hold', True)
     fingerprint = data['fingerprint']
 
+    cache.set(fingerprint, {'verdict': Verdict.WAITING.value}, timeout=3600)
     p = judge_handler.apply_async((fingerprint, data['code'], data['lang'], data['cases'],
                                    data['max_time'], data['max_memory'], data['checker']),
                                   {'interactor_fingerprint': data.get('interactor'),
@@ -210,7 +212,6 @@ def judge():
     if hold:
         return jsonify(p.get())
     else:
-        cache.set(fingerprint, json.dumps({'verdict': Verdict.WAITING.value}), timeout=3600)
         threading.Thread(target=p.get).start()
         return response_ok()
 
@@ -221,8 +222,9 @@ def judge():
 def query():
     data = request.get_json()
     fingerprint = data['fingerprint']
-    status = response_ok(**cache.get(fingerprint))
-    return status
+    status = cache.get(fingerprint)
+    status.setdefault('status', 'received')
+    return jsonify(status)
 
 
 if __name__ == '__main__':
