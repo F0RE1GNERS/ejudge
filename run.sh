@@ -7,6 +7,7 @@ fi
 core=$(grep --count ^processor /proc/cpuinfo)
 n=$(($core*2))
 
+service memcached start
 service redis-server start
 celery multi start worker -A handler \
     --pidfile="/ejudge/run/log/celery-%n.pid" \

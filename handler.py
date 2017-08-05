@@ -3,9 +3,9 @@ import time
 import traceback
 from os import path
 
-import redis
 from celery import Celery
 from flask import Flask
+from werkzeug.contrib.cache import MemcachedCache
 
 from config.config import Verdict, TRACEBACK_LIMIT, SECRET_KEY, MAX_WORKER_NUMBER, MAX_TASKS_PER_CHILD, OUTPUT_LIMIT
 from core.case import Case
@@ -26,7 +26,7 @@ flask_app.config['worker_max_tasks_per_child'] = MAX_TASKS_PER_CHILD
 celery = Celery(flask_app.name, broker=flask_app.config['broker_url'])
 celery.conf.update(flask_app.config)
 
-redis_db = redis.StrictRedis(host='localhost', port=6379, db=1)
+cache = MemcachedCache(['127.0.0.1:11211'])
 
 
 def reject_with_traceback():
@@ -60,7 +60,7 @@ def judge_handler(self,
                 case_result = case_runner.run(case)
                 case_result['verdict'] = case_result['verdict'].value
                 detail.append(case_result)
-                self.update_state(state="PROGRESS", meta=response)
+                cache.set(sub_fingerprint, response, timeout=3600)
                 if case_result.get('time'):
                     time_verdict = max(time_verdict, case_result['time'])
                 if case_result['verdict'] != Verdict.ACCEPTED.value:
@@ -82,6 +82,7 @@ def judge_handler(self,
             submission.clean()
         except NameError:
             pass
+    cache.set(sub_fingerprint, response, timeout=3600)
     return response
 
 

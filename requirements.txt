@@ -9,3 +9,4 @@ flask
 celery
 eventlet
 redis
+python-memcached

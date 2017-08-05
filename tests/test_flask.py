@@ -300,11 +300,28 @@ class FlaskTest(TestBase):
         self.assertEqual(self.judge_aplusb(self.read_content('./submission/aplusb.cpp'), 'cpp'), Verdict.ACCEPTED.value)
         self.assertEqual(self.judge_aplusb(self.read_content('./submission/aplusb.cpp'), 'cpp', False), Verdict.ACCEPTED.value)
 
+    def test_aplusb_judge_traceback(self):
+        judge_upload = dict(fingerprint=self.rand_str(True), lang='cpp', code='',
+                            cases=[], max_time=1, max_memory=128, checker='ttt', hold=False)
+        response = requests.post(self.url_base + '/judge', json=judge_upload, auth=self.token).json()
+        self.assertEqual('received', response['status'], response)
+        time.sleep(3)
+        response = requests.get(self.url_base + '/query', json={'fingerprint': judge_upload['fingerprint']},
+                                auth=self.token).json()
+        self.assertEqual('reject', response['status'])
+        self.assertIn('message', response)
+
     def test_aplusb_judge_ce(self):
-        self.assertEqual(self.judge_aplusb(self.read_content('./submission/aplusb-ce.c'), 'c'), Verdict.COMPILE_ERROR.value)
+        self.assertEqual(self.judge_aplusb(self.read_content('./submission/aplusb-ce.c'), 'c'),
+                         Verdict.COMPILE_ERROR.value)
+        self.assertEqual(self.judge_aplusb(self.read_content('./submission/aplusb-ce.c'), 'c', False),
+                         Verdict.COMPILE_ERROR.value)
 
     def test_aplusb_judge_wa(self):
-        self.assertEqual(self.judge_aplusb(self.read_content('./submission/aplusb-wrong.py'), 'python'), Verdict.WRONG_ANSWER.value)
+        self.assertEqual(self.judge_aplusb(self.read_content('./submission/aplusb-wrong.py'), 'python'),
+                         Verdict.WRONG_ANSWER.value)
+        self.assertEqual(self.judge_aplusb(self.read_content('./submission/aplusb-wrong.py'), 'python', False),
+                         Verdict.WRONG_ANSWER.value)
 
     def test_speed_val(self):
         start = time.time()

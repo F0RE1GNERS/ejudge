@@ -13,7 +13,7 @@ from config.config import COMPILE_MAX_TIME_FOR_TRUSTED, TOKEN_FILE, CUSTOM_FILE,
 from core.case import Case
 from core.judge import TrustedSubmission
 from handler import flask_app, judge_handler, judge_handler_one, generate_handler, validate_handler
-from handler import reject_with_traceback, stress_handler, redis_db
+from handler import reject_with_traceback, stress_handler, cache
 
 
 @flask_app.route('/ping')
@@ -203,10 +203,6 @@ def judge():
     hold = data.get('hold', True)
     fingerprint = data['fingerprint']
 
-    """This is the http version of judge, used in retry"""
-    def on_raw_message(body):
-        redis_db.set(fingerprint, json.dumps(body['result']), ex=3600)
-
     p = judge_handler.apply_async((fingerprint, data['code'], data['lang'], data['cases'],
                                    data['max_time'], data['max_memory'], data['checker']),
                                   {'interactor_fingerprint': data.get('interactor'),
@@ -214,8 +210,8 @@ def judge():
     if hold:
         return jsonify(p.get())
     else:
-        redis_db.set(fingerprint, json.dumps({'verdict': Verdict.WAITING.value}), ex=3600)
-        threading.Thread(target=p.get, kwargs={'on_message': on_raw_message}).start()
+        cache.set(fingerprint, json.dumps({'verdict': Verdict.WAITING.value}), timeout=3600)
+        threading.Thread(target=p.get).start()
         return response_ok()
 
 
@@ -225,7 +221,7 @@ def judge():
 def query():
     data = request.get_json()
     fingerprint = data['fingerprint']
-    status = response_ok(**json.loads(redis_db.get(fingerprint).decode()))
+    status = response_ok(**cache.get(fingerprint))
     return status
 
 

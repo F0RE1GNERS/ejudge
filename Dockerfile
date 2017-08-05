@@ -7,7 +7,7 @@ RUN apt-get update \
                           locales python3-software-properties python3 python3-dev python3-pip \
                           gcc g++ git libtool python-pip libseccomp-dev cmake openjdk-8-jdk nginx redis-server \
                           mono-devel php gfortran perl ghc scala nodejs nodejs-legacy \
-                          rustc fp-compiler clang pypy mono-complete ocaml-nox \
+                          rustc fp-compiler clang pypy mono-complete ocaml-nox memcached \
     && locale-gen en_US.UTF-8 \
     && mkdir -p /ejudge
 COPY . /ejudge
