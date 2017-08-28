@@ -104,7 +104,7 @@ class Submission(object):
             if cleanup and path.exists(result_file):
                 remove(result_file)
             return message
-        except FileNotFoundError:
+        except:
             return ''
 
     def make_a_file_to_write(self):
