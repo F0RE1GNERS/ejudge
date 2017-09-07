@@ -186,11 +186,11 @@ def judge_one(target):
     data = request.get_json()
     args = (data.pop('submission'), data.pop('max_time'), data.pop('max_memory'), data.pop('input'))
     data['target'] = target
-    if data.get('output'):
+    if 'output' in data:
         data['case_output_b64'] = data.pop('output')
-    if data.get('checker'):
+    if 'checker' in data:
         data['checker_dict'] = data.pop('checker')
-    if data.get('interactor'):
+    if 'interactor' in data:
         data['interactor_dict'] = data.pop('interactor')
     p = judge_handler_one.apply_async(args, data)
     return jsonify(p.get())
