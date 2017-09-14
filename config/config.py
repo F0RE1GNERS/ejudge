@@ -51,8 +51,8 @@ class Verdict(Enum):
 USUAL_READ_SIZE = 512
 TRACEBACK_LIMIT = 5
 COMPILE_MAX_TIME_FOR_TRUSTED = 30
-COMPILE_TIME_FACTOR = 10  # compile time limit is 10 times max time limit
-REAL_TIME_FACTOR = 3  # real time limit is 2 times max time limit
+COMPILE_TIME_FACTOR = 5  # compile time limit is 5 times max time limit
+REAL_TIME_FACTOR = 2  # real time limit is 2 times max time limit
 MAX_WORKER_NUMBER = max(cpu_count() // 4, 1)
 MAX_TASKS_PER_CHILD = 10
 OUTPUT_LIMIT = 256

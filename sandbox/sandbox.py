@@ -69,6 +69,8 @@ class Sandbox:
         self.stderr.close()
 
     def set_resource_limit(self):
+        if self.max_cpu_time > 0:
+            resource.setrlimit(resource.RLIMIT_CPU, (int(self.max_memory + 1), int(self.max_memory + 1)))
         if self.max_memory > 0:
             resource.setrlimit(resource.RLIMIT_AS, (int(self.max_memory * 2), int(self.max_memory * 2)))
             resource.setrlimit(resource.RLIMIT_STACK, (int(self.max_memory * 2), int(self.max_memory * 2)))
