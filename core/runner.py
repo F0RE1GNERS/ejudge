@@ -90,9 +90,9 @@ class InteractiveRunner(CaseRunner):
 
         # prevent compile waiting time
         if self.interactor.to_compile:
-            self.interactor.compile(self.max_time * COMPILE_TIME_FACTOR)
+            self.interactor.compile(min(self.max_time * COMPILE_TIME_FACTOR, 10))
         if self.submission.to_compile:
-            self.submission.compile(self.max_time * COMPILE_TIME_FACTOR)
+            self.submission.compile(min(self.max_time * COMPILE_TIME_FACTOR, 10))
 
         running_output = self.submission.make_a_file_to_write()
 
