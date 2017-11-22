@@ -44,6 +44,18 @@ java:
   seccomp_rule: java
   env:
     MALLOC_ARENA_MAX: "1"
+scala:
+  type: compiler
+  compiler_file: /usr/bin/scalac
+  compiler_args: -d {workspace} -encoding utf8 {code_path}
+  code_file: Main.scala
+  execute_file: /usr/bin/scala
+  execute_args: -cp {workspace} -J-Xss1M -J-XX:MaxPermSize=16M -J-XX:PermSize=8M -J-Xms16M -J-Xmx{max_memory}M -Dfile.encoding=UTF-8 Main
+  execute_args_unsafe: -cp {workspace} Main
+  memory_flag: MB
+  seccomp_rule: java
+  env:
+    MALLOC_ARENA_MAX: "1"
 py2:
   type: interpreter
   code_file: foo.py

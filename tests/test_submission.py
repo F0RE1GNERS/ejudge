@@ -84,6 +84,9 @@ class APlusBTest(TestBase):
     def test_rs(self):
         pass
 
+    def test_scala(self):
+        pass
+
 
 class TrustedSubmissionTest(TestBase):
 
