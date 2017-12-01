@@ -13,8 +13,8 @@ from flask import request, Response, jsonify
 from config.config import COMPILE_MAX_TIME_FOR_TRUSTED, TOKEN_FILE, CUSTOM_FILE, Verdict
 from core.case import Case
 from core.judge import TrustedSubmission
-from handler import flask_app, judge_handler, judge_handler_one, generate_handler, validate_handler
-from handler import reject_with_traceback, stress_handler, cache
+from handler import flask_app, judge_handler
+from handler import reject_with_traceback, cache
 
 
 @flask_app.route('/ping')
@@ -142,60 +142,6 @@ def delete_trusted_submission(fid):
     return response_ok()
 
 
-@flask_app.route('/generate', methods=['POST'])
-@auth_required
-@with_traceback_on_err
-def generate():
-    data = request.get_json()
-    p = generate_handler.apply_async((data['fingerprint'], data['code'], data['lang'],
-                                      data['max_time'], data['max_memory'], data['command_line_args']),
-                                     {'multiple': data.get("multiple", False)})
-    return jsonify(p.get())
-
-
-@flask_app.route('/validate', methods=['POST'])
-@auth_required
-@with_traceback_on_err
-def validate():
-    data = request.get_json()
-    p = validate_handler.apply_async((data['fingerprint'], data['code'], data['lang'],
-                                      data['max_time'], data['max_memory'], data['input']),
-                                     {'multiple': data.get("multiple", False)})
-    return jsonify(p.get())
-
-
-@flask_app.route('/stress', methods=['POST'])
-@auth_required
-@with_traceback_on_err
-def stress():
-    data = request.get_json()
-    if len(data['command_line_args_list']) < 1:
-        raise ValueError("Must have at least one command line argument")
-    args = (data.pop('std'), data.pop('submission'), data.pop('generator'), data.pop('command_line_args_list'),
-            data.pop('max_time'), data.pop('max_memory'), data.pop('max_sum_time'), data.pop('checker'))
-    if data.get('interactor'):
-        data['interactor_dict'] = data.pop('interactor')
-    p = stress_handler.apply_async(args, data)
-    return jsonify(p.get())
-
-
-@flask_app.route('/judge/<target>', methods=['POST'])
-@auth_required
-@with_traceback_on_err
-def judge_one(target):
-    data = request.get_json()
-    args = (data.pop('submission'), data.pop('max_time'), data.pop('max_memory'), data.pop('input'))
-    data['target'] = target
-    if 'output' in data:
-        data['case_output_b64'] = data.pop('output')
-    if 'checker' in data:
-        data['checker_dict'] = data.pop('checker')
-    if 'interactor' in data:
-        data['interactor_dict'] = data.pop('interactor')
-    p = judge_handler_one.apply_async(args, data)
-    return jsonify(p.get())
-
-
 @flask_app.route('/judge', methods=['POST'])
 @auth_required
 @with_traceback_on_err
@@ -225,6 +171,18 @@ def query():
     status = cache.get(fingerprint)
     status.setdefault('status', 'received')
     return jsonify(status)
+
+
+@flask_app.route('/query/report', methods=['GET'])
+@auth_required
+@with_traceback_on_err
+def query_result():
+    data = request.get_json()
+    fingerprint = data.get('fingerprint', '')
+    status = cache.get('report_%s' % fingerprint)
+    if status is None:
+        status = ''
+    return status
 
 
 if __name__ == '__main__':

@@ -11,7 +11,6 @@
 
 import pickle
 from os import fork, pipe, _exit, close, fdopen
-from enum import Enum
 import base64
 
 from config.config import DEVNULL, Verdict, COMPILE_TIME_FACTOR, REAL_TIME_FACTOR, USUAL_READ_SIZE
@@ -19,73 +18,79 @@ from core.util import get_signal_name, serialize_sandbox_result
 from sandbox.sandbox import Sandbox
 
 
-class RunnerResultType(Enum):
-    FINAL = 0
-    OUTPUT = 1
-    SUB_SANDBOX_RESULT = 2
-    CHECKER_RESULT = 3
-    INTERACTOR_RESULT = 4
-
-
 class CaseRunner(object):
 
-    def __init__(self, submission, checker, max_time, max_memory):
+    def __init__(self, submission, checker, max_time, max_memory, report_file=None):
         self.submission = submission
         self.checker = checker
         self.max_time = max_time
         self.max_memory = max_memory
+        self.report_file = report_file
 
     def initiate_case(self, case):
         self.case = case
         self.case.check_validity()
 
-    def run(self, case, result_type=RunnerResultType.FINAL):
+    def run(self, case):
         self.initiate_case(case)
 
         running_output = self.submission.make_a_file_to_write()
         running_result = self.submission.run(self.case.input_file, running_output, DEVNULL,
                                              self.max_time, self.max_memory)
-        if result_type == RunnerResultType.OUTPUT:
-            return {'output': self.read_output_as_b64(running_output)}
-        elif result_type == RunnerResultType.SUB_SANDBOX_RESULT:
-            return serialize_sandbox_result(running_result)
 
         if running_result.verdict != Verdict.ACCEPTED:
             # If sub fails to run, the result is final
-            return self.running_fail_result(running_result)
+            result = self.running_fail_result(running_result)
+            checker_message = result.get('message', '')  # message is kept
         else:
-            return self.do_check(running_output, running_result, result_type == RunnerResultType.CHECKER_RESULT)
+            result = self.do_check(running_output, running_result)
+            checker_message = result.pop('message', '')  # message is popped
+        if self.report_file:
+            self.write_report(running_output, running_result, result, checker_message)
+        return result
 
     def read_output_as_b64(self, file):
-        return base64.b64encode(open(file, 'rb').read()).decode()
+        return base64.b64encode(open(file, 'rb').read(USUAL_READ_SIZE)).decode()
+
+    def encode_as_b64(self, txt):
+        return base64.b64encode(txt.encode()).decode()
 
     def running_fail_result(self, running_result):
         assert running_result.verdict != Verdict.ACCEPTED
         result = dict()
         result['verdict'] = running_result.verdict
+        result['time'] = running_result.time
         if running_result.verdict == Verdict.RUNTIME_ERROR:
             result['message'] = get_signal_name(running_result.signal)
         return result
 
-    def do_check(self, running_output, running_result, get_message=False):
+    def do_check(self, running_output, running_result):
         result = dict()
         checker_result = self.checker.check(self.case.input_file, running_output, self.case.output_file,
                                             self.max_time, self.max_memory)
         result['verdict'] = checker_result.verdict
-        if get_message:
-            result['message'] = checker_result.message
-        if checker_result.verdict == Verdict.ACCEPTED:
-            result['time'] = running_result.time
+        result['message'] = checker_result.message
+        result['time'] = running_result.time
         return result
+
+    def write_report(self, running_output, running_result, final_result, checker_message):
+        input_b64 = self.read_output_as_b64(self.case.input_file)
+        output_b64 = self.read_output_as_b64(running_output)
+        answer_b64 = self.read_output_as_b64(self.case.output_file)
+        checker_b64 = self.encode_as_b64(checker_message)
+        self.report_file.write('time: %.3fs, estimate memory: %.3f MB, exit code: %d, verdict: %s|%s|%s|%s|%s\n' % (
+            running_result.time, running_result.memory, running_result.exit_code, final_result['verdict'].name,
+            input_b64, output_b64, answer_b64, checker_b64
+        ))
 
 
 class InteractiveRunner(CaseRunner):
 
-    def __init__(self, submission, interactor, checker, max_time, max_memory):
-        super().__init__(submission, checker, max_time, max_memory)
+    def __init__(self, submission, interactor, checker, max_time, max_memory, report_file=None):
+        super().__init__(submission, checker, max_time, max_memory, report_file=report_file)
         self.interactor = interactor
 
-    def run(self, case, result_type=RunnerResultType.FINAL):
+    def run(self, case):
         self.initiate_case(case)
 
         # prevent compile waiting time
@@ -128,16 +133,15 @@ class InteractiveRunner(CaseRunner):
         w.close()
         r_report.close()
 
-        if result_type == RunnerResultType.OUTPUT:
-            return {'output': self.read_output_as_b64(running_output)}
-        elif result_type == RunnerResultType.SUB_SANDBOX_RESULT:
-            return serialize_sandbox_result(running_result)
-        elif result_type == RunnerResultType.INTERACTOR_RESULT:
-            return {'verdict': interactor_result.verdict, 'message': interactor_result.message}
-
+        checker_message = ''
         if running_result.verdict != Verdict.ACCEPTED:
-            return self.running_fail_result(running_result)
+            result = self.running_fail_result(running_result)
+            checker_message = result.get('message', '')
         elif interactor_result.verdict != Verdict.ACCEPTED:
-            return {'verdict': interactor_result.verdict}
+            result = {'verdict': interactor_result.verdict}
         else:
-            return self.do_check(running_output, running_result, result_type == RunnerResultType.CHECKER_RESULT)
+            result =  self.do_check(running_output, running_result)
+            checker_message = result.pop('message', '')
+        if self.report_file:
+            self.write_report(running_output, running_result, result, checker_message)
+        return result
