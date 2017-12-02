@@ -38,11 +38,13 @@ def reject_with_traceback():
 def judge_handler(self,
                   sub_fingerprint, sub_code, sub_lang,
                   case_list, max_time, max_memory,
-                  checker_fingerprint,
+                  checker_fingerprint='',
                   interactor_fingerprint=None,
                   run_until_complete=False):
     try:
         submission = Submission(sub_fingerprint, sub_code, sub_lang)
+        if not checker_fingerprint:
+            checker_fingerprint = 'defaultspj'
         checker = Checker.fromExistingFingerprint(checker_fingerprint)
         report = StringIO()
         if interactor_fingerprint:

@@ -14,16 +14,14 @@ COPY . /ejudge
 WORKDIR /ejudge
 ENV LANG=en_US.UTF-8 LANGUAGE=en_US:en LC_ALL=en_US.UTF-8
 RUN useradd -r compiler \
+    && g++ -o lib/defaultspj lib/defaultspj.cpp -O2 -std=c++11 -lm
     && cp sandbox/java_policy /etc/ \
     && mkdir -p run/data run/sub run/log \
     && pip3 install -r requirements.txt \
     && python3 setup.py build_ext --inplace \
+    && python3 install_defaultspj.py
     && chmod 600 config/* \
     && chmod +x run.sh \
-    && cd tests \
-    && python3 test_submission.py \
-    && python3 test_runner.py \
-    && rm -rf /ejudge/run \
     && cd /ejudge \
     && mkdir -p run/data run/sub run/log
 VOLUME /ejudge

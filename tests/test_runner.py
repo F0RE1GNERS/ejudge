@@ -34,13 +34,23 @@ class RunnerTest(TestBase):
         result = case_runner.run(case)
         self.assertEqual(result['verdict'], Verdict.ACCEPTED)
 
+    def test_aplusb_defaultspj(self):
+        code = self.read_content('./submission/aplusb.cpp')
+        case = Case(self.rand_str(True))
+        case.write_input_binary(b"1\n2\n")
+        case.write_output_binary(b"3\n")
+        checker = Checker.fromExistingFingerprint('defaultspj')
+        submission = Submission(self.rand_str(True), code, 'cpp')
+        case_runner = CaseRunner(submission, checker, 1, 128)
+        result = case_runner.run(case)
+        self.assertEqual(result['verdict'], Verdict.ACCEPTED)
+
     def test_aplub_wrong(self):
         code = self.read_content('./submission/aplusb.cpp')
-        checker_code = self.read_content('./submission/ncmp.cpp')
         case = Case(self.rand_str(True))
         case.write_input_binary(b"1\n2\n")
         case.write_output_binary(b"4\n")
-        checker = Checker(self.rand_str(True), checker_code, 'cpp')
+        checker = Checker.fromExistingFingerprint('defaultspj')
         submission = Submission(self.rand_str(True), code, 'cpp')
         case_runner = CaseRunner(submission, checker, 1, 128)
         result = case_runner.run(case)
@@ -72,12 +82,11 @@ class RunnerTest(TestBase):
 
     def test_interactive_normal(self):
         code = self.read_content('./interact/a-plus-b.py')
-        checker_code = self.read_content('./submission/ncmp.cpp')
         interacter_code = self.read_content('./interact/interactor-a-plus-b.cpp')
         case = Case(self.rand_str(True))
         case.write_input_binary(self.read_content('./interact/a-plus-b-input.txt', 'rb'))
         case.write_output_binary(self.read_content('./interact/a-plus-b-output.txt', 'rb'))
-        checker = Checker(self.rand_str(True), checker_code, 'cpp')
+        checker = Checker.fromExistingFingerprint('defaultspj')
         interactor = Interactor(self.rand_str(True), interacter_code, 'cpp')
         submission = Submission(self.rand_str(True), code, 'python')
         case_runner = InteractiveRunner(submission, interactor, checker, 1, 128)
@@ -86,12 +95,11 @@ class RunnerTest(TestBase):
 
     def test_interactive_wrong_answer(self):
         code = self.read_content('./interact/a-plus-b.py')
-        checker_code = self.read_content('./submission/ncmp.cpp')
         interacter_code = self.read_content('./interact/interactor-a-plus-b.cpp')
         case = Case(self.rand_str(True))
         case.write_input_binary(self.read_content('./interact/a-plus-b-input.txt', 'rb'))
         case.write_output_binary(self.read_content('./interact/a-plus-b-output-wrong.txt', 'rb'))
-        checker = Checker(self.rand_str(True), checker_code, 'cpp')
+        checker = Checker.fromExistingFingerprint('defaultspj')
         interactor = Interactor(self.rand_str(True), interacter_code, 'cpp')
         submission = Submission(self.rand_str(True), code, 'python')
         case_runner = InteractiveRunner(submission, interactor, checker, 1, 128)

@@ -152,8 +152,9 @@ def judge():
 
     cache.set(fingerprint, {'verdict': Verdict.WAITING.value}, timeout=3600)
     p = judge_handler.apply_async((fingerprint, data['code'], data['lang'], data['cases'],
-                                   data['max_time'], data['max_memory'], data['checker']),
-                                  {'interactor_fingerprint': data.get('interactor'),
+                                   data['max_time'], data['max_memory']),
+                                  {'checker_fingerprint': data.get('checker', ''),
+                                   'interactor_fingerprint': data.get('interactor'),
                                    'run_until_complete': data.get('run_until_complete', False), })
     if hold:
         return jsonify(p.get())
