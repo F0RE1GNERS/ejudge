@@ -50,7 +50,11 @@ class CaseRunner(object):
         return result
 
     def read_output_as_b64(self, file):
-        return base64.b64encode(open(file, 'rb').read(USUAL_READ_SIZE)).decode()
+        with open(file, 'r') as handler:
+            txt = handler.read(USUAL_READ_SIZE)
+            if handler.read(1):
+                txt += '...'
+        return self.encode_as_b64(txt)
 
     def encode_as_b64(self, txt):
         return base64.b64encode(txt.encode()).decode()

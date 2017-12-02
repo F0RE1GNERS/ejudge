@@ -51,8 +51,8 @@ public:
         reverse(ans.begin(), ans.end());
 
         for (i = 0; i < 15; ++i) {
-            if (rptr++ != p2 && isCompressChar(*rptr))
-                ans += *rptr;
+            if (rptr != p2 && isCompressChar(*rptr))
+                ans += *rptr++;
             else break;
         }
         if (i == 15) ans += "...";
