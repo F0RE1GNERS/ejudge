@@ -152,7 +152,7 @@ class Submission(object):
             max_memory = -1
 
         if self.to_compile:
-            self.compile(min(max_time * COMPILE_TIME_FACTOR, 10))
+            self.compile(max(max_time * COMPILE_TIME_FACTOR, 10))
         sandbox = Sandbox(self.execute_file, execute_args,
                           stdin=stdin, stdout=stdout, stderr=stderr,
                           max_time=max_time, max_real_time=max_real_time, max_memory=max_memory,
