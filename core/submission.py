@@ -86,7 +86,7 @@ class Submission(object):
                           )
         result = sandbox.run()
         if result.verdict != Verdict.ACCEPTED:
-            error_message = self.get_message_from_file(error_path)
+            error_message = self.get_message_from_file(error_path, read_size=-1)
             if not error_message:
                 if result.verdict == Verdict.TIME_LIMIT_EXCEEDED:
                     error_message = 'Time limit exceeded when compiling'
@@ -97,10 +97,12 @@ class Submission(object):
             raise CompileError(error_message)
         self.to_compile = False
 
-    def get_message_from_file(self, result_file, cleanup=False):
+    def get_message_from_file(self, result_file, read_size=USUAL_READ_SIZE, cleanup=False):
         try:
             with open(result_file, 'r') as result_fs:
-                message = result_fs.read(USUAL_READ_SIZE)
+                if read_size > 0:
+                    message = result_fs.read(USUAL_READ_SIZE)
+                else: message = result_fs.read()   # unlimited
             if cleanup and path.exists(result_file):
                 remove(result_file)
             return message
