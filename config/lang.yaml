@@ -54,6 +54,7 @@ scala:
   execute_args_unsafe: -cp {workspace} Main
   memory_flag: MB
   seccomp_rule: java
+  minimum_compilation_time: 30
   env:
     MALLOC_ARENA_MAX: "1"
 py2:

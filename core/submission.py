@@ -52,6 +52,7 @@ class Submission(object):
         self.env.update(language_config.get('env', {}))
         self.memory_flag = language_config.get('memory_flag', '') # when memory info shows up in the command or env...
         self.seccomp_rule = language_config.get('seccomp_rule', 'general')
+        self.compilation_time_limit = language_config.get('minimum_compilation_time', 15)
 
         self.permanent = permanent
 
@@ -154,7 +155,7 @@ class Submission(object):
             max_memory = -1
 
         if self.to_compile:
-            self.compile(max(max_time * COMPILE_TIME_FACTOR, 10))
+            self.compile(self.compilation_time_limit)
         sandbox = Sandbox(self.execute_file, execute_args,
                           stdin=stdin, stdout=stdout, stderr=stderr,
                           max_time=max_time, max_real_time=max_real_time, max_memory=max_memory,

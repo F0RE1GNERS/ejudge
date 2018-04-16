@@ -9,6 +9,7 @@ n=$(($core*2))
 
 service memcached start
 service redis-server start
+# TODO: fix celery has to be restarted manually after restart the docker
 celery multi start worker -A handler \
     --pidfile="/ejudge/run/log/celery-%n.pid" \
     --logfile="/ejudge/run/log/celery-%n%I.log"

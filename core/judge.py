@@ -67,7 +67,7 @@ class TrustedSubmission(Submission):
         """
         if checker_result.verdict != Verdict.ACCEPTED:
             if checker_result.verdict != Verdict.RUNTIME_ERROR:
-                return Verdict.JUDGE_ERROR
+                return checker_result.verdict
             else:
                 return Verdict.WRONG_ANSWER
         else:
