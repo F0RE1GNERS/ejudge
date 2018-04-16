@@ -123,6 +123,8 @@ class FlaskTest(TestBase):
     def test_aplusb_judge(self):
         self.assertEqual(self.judge_aplusb(self.read_content('./submission/aplusb.cpp'), 'cpp'), Verdict.ACCEPTED.value)
         self.assertEqual(self.judge_aplusb(self.read_content('./submission/aplusb.cpp'), 'cpp', False), Verdict.ACCEPTED.value)
+        self.assertEqual(self.judge_aplusb(self.read_content('./submission/aplusb2.cpp'), 'cpp', False),
+                         Verdict.ACCEPTED.value)
 
     def test_aplusb_judge_traceback(self):
         judge_upload = dict(fingerprint=self.rand_str(True), lang='cpp', code='',

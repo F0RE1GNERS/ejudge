@@ -35,7 +35,8 @@ class CaseRunner(object):
         self.initiate_case(case)
 
         running_output = self.submission.make_a_file_to_write()
-        running_result = self.submission.run(self.case.input_file, running_output, DEVNULL,
+        running_stderr = self.submission.make_a_file_to_write()
+        running_result = self.submission.run(self.case.input_file, running_output, running_stderr,
                                              self.max_time, self.max_memory)
 
         if running_result.verdict != Verdict.ACCEPTED:
@@ -46,7 +47,7 @@ class CaseRunner(object):
             result = self.do_check(running_output, running_result)
             checker_message = result.pop('message', '')  # message is popped
         if self.report_file:
-            self.write_report(running_output, running_result, result, checker_message)
+            self.write_report(running_output, running_stderr, running_result, result, checker_message)
         return result
 
     def read_output_as_b64(self, file):
@@ -80,14 +81,15 @@ class CaseRunner(object):
         result['time'] = running_result.time
         return result
 
-    def write_report(self, running_output, running_result, final_result, checker_message):
+    def write_report(self, running_output, running_stderr, running_result, final_result, checker_message):
         input_b64 = self.read_output_as_b64(self.case.input_file)
         output_b64 = self.read_output_as_b64(running_output)
+        err_b64 = self.read_output_as_b64(running_stderr)
         answer_b64 = self.read_output_as_b64(self.case.output_file)
         checker_b64 = self.encode_as_b64(checker_message)
-        self.report_file.write('time: %.3fs, estimate memory: %.3f MB, exit code: %d, verdict: %s|%s|%s|%s|%s\n' % (
+        self.report_file.write('time: %.3fs, estimate memory: %.3f MB, exit code: %d, verdict: %s|%s|%s|%s|%s|%s\n' % (
             running_result.time, running_result.memory, running_result.exit_code, final_result['verdict'].name,
-            input_b64, output_b64, answer_b64, checker_b64
+            input_b64, output_b64, err_b64, answer_b64, checker_b64
         ))
 
 
@@ -107,6 +109,7 @@ class InteractiveRunner(CaseRunner):
             self.submission.compile(self.submission.compilation_time_limit)
 
         running_output = self.submission.make_a_file_to_write()
+        running_stderr = self.submission.make_a_file_to_write()
 
         r1, w1 = pipe()  # interactor read, submission write
         r2, w2 = pipe()  # submission read, interactor write
@@ -134,7 +137,7 @@ class InteractiveRunner(CaseRunner):
         close(w_report)
         r, w = fdopen(r2, 'r'), fdopen(w1, 'w')
         r_report = fdopen(r_report, 'rb')
-        running_result = self.submission.run(r, w, DEVNULL, self.max_time, self.max_memory)
+        running_result = self.submission.run(r, w, running_stderr, self.max_time, self.max_memory)
         interactor_result = pickle.load(r_report)
         r.close()
         w.close()
@@ -150,5 +153,5 @@ class InteractiveRunner(CaseRunner):
             result =  self.do_check(running_output, running_result)
             checker_message = result.pop('message', '')
         if self.report_file:
-            self.write_report(running_output, running_result, result, checker_message)
+            self.write_report(running_output, running_stderr, running_result, result, checker_message)
         return result
