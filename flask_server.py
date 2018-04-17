@@ -155,7 +155,9 @@ def judge():
                                    data['max_time'], data['max_memory']),
                                   {'checker_fingerprint': data.get('checker', ''),
                                    'interactor_fingerprint': data.get('interactor'),
-                                   'run_until_complete': data.get('run_until_complete', False), })
+                                   'run_until_complete': data.get('run_until_complete', False),
+                                   'group_list': data.get('group_list'),
+                                   'group_dependencies': data.get('group_dependencies')})
     if hold:
         return jsonify(p.get())
     else:
