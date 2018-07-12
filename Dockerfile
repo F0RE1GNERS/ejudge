@@ -13,7 +13,7 @@ RUN apt-get update \
     && apt-get update \
     && apt-get -y install g++-7 \
     && wget https://bitbucket.org/pypy/pypy/downloads/pypy3-v6.0.0-linux64.tar.bz2 \
-    && sudo ln -s /pypy3-v6.0.0-linux64/bin/pypy3 /usr/local/bin/pypy3 \
+    && ln -s /pypy3-v6.0.0-linux64/bin/pypy3 /usr/local/bin/pypy3 \
     && rm pypy3-v6.0.0-linux64.tar.bz2 \
     && locale-gen en_US.UTF-8 \
     && mkdir -p /ejudge
