@@ -12,3 +12,6 @@ python-memcached
 numpy
 scipy
 scikit-learn
+pandas
+beautifulsoup4
+nltk

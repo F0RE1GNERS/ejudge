@@ -33,7 +33,8 @@ def format(s, as_list=False, **kwargs):
     else:
         v = []
         for token in s.split(' '):
-            if token.startswith("{") and token.endswith("}") and token[1:-1] in kwargs:
+            if token.startswith("{") and token.endswith("}") and \
+                            token[1:-1] in kwargs and isinstance(kwargs[token[1:-1]], list):
                 v.extend(kwargs[token[1:-1]])
             else:
                 v.append(token.format(**kwargs))

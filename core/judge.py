@@ -55,11 +55,6 @@ class TrustedSubmission(Submission):
         kwargs.pop('trusted', None)
         return super().run(stdin, stdout, stderr, max_time, max_memory, trusted=True, **kwargs)
 
-    def __init__(self, fingerprint, code, lang, permanent=False):
-        super().__init__(fingerprint, code, lang, permanent)
-        # if self.to_compile and self.lang in ['cc', 'cpp', 'cc14', 'cc17']:
-        #     self.compiler_args = ['-I', LIB_BASE] + self.compiler_args
-
     def get_verdict_from_test_result(self, checker_result):
         """
         :param checker_result: a Sandbox.Result directly returned from checker running

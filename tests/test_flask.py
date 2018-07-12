@@ -36,6 +36,8 @@ class FlaskTest(TestBase):
         self.assertEqual({3: {1, 3, 4, 5, 6, 7}, 4: {1, 4, 5, 6, 7}, 5: {1, 5, 6, 7}, 6: {1, 6, 7}, 7: {1, 7}},
                          trace_group_dependencies([(1,7),(7,6),(6,5),(5,4),(4,3)]))
         self.assertEqual({1: {1, 3}, 2: {2, 3}}, trace_group_dependencies([(3, 1), (3, 2)]))
+        self.assertEqual({1: {1, 2, 3, 4}, 2: {2, 4}, 3: {3, 4}, 4: {4}},
+                         trace_group_dependencies([(2, 1), (3, 1), (4, 2), (4, 3)]))
 
     def test_upload_success(self):
         fingerprint = 'test_%s' % self.rand_str()

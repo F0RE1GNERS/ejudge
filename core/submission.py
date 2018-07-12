@@ -55,6 +55,7 @@ class Submission(object):
             self.to_compile = True
             self.compiler_file = format(language_config['compiler_file'], **path_config)
             self.compiler_args = format(language_config.get('compiler_args', ''), as_list=True, **path_config)
+            print(self.compiler_file, self.compiler_args)
         else:
             self.to_compile = False
         self.execute_file = format(language_config['execute_file'], **path_config)

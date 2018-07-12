@@ -48,6 +48,9 @@ class APlusBTest(TestBase):
     def test_cc14(self):
         pass
 
+    def test_cc17(self):
+        pass
+
     def test_cs(self):
         pass
 
@@ -87,10 +90,14 @@ class APlusBTest(TestBase):
     def test_scala(self):
         pass
 
+    def test_text(self):
+        pass
+
 
 class TrustedSubmissionTest(TestBase):
 
     def setUp(self):
+        logging.basicConfig(level=logging.INFO)
         self.workspace = '/tmp/trusted'
         super(TrustedSubmissionTest, self).setUp()
 
@@ -114,6 +121,44 @@ class TrustedSubmissionTest(TestBase):
         self.result = self.submission.run(**self.running_config)
         self.assertEqual(self.result.verdict, Verdict.ACCEPTED)
         self.assertEqual('unsafe', self.output_content(self.running_config['stdout']).strip())
+
+    def test_cpp_library(self):
+        self.running_config = {
+            'stdin': '/dev/null',
+            'stdout': self.output_path(),
+            'stderr': self.output_path(),
+            'max_time': 3,
+            'max_memory': 128,
+        }
+
+        code = self.read_content('./submission/testlib-test.cpp')
+        fingerprint = self.rand_str()
+
+        self.submission = Submission(fingerprint, code, 'cpp')
+        self.result = self.submission.run(**self.running_config)
+        self.assertEqual(self.result.verdict, Verdict.ACCEPTED)
+        print(self.output_content(self.running_config['stdout']))
+        self.submission.clean()
+
+    # TODO: python library limitations break
+    # def test_python_library(self):
+    #     self.running_config = {
+    #         'stdin': '/dev/null',
+    #         'stdout': self.output_path(),
+    #         'stderr': self.output_path(),
+    #         'max_time': 3,
+    #         'max_memory': 512,
+    #     }
+    #
+    #     code = self.read_content('./submission/numpy-test.py')
+    #     fingerprint = self.rand_str()
+    #
+    #     self.submission = Submission(fingerprint, code, 'python')
+    #     self.result = self.submission.run(**self.running_config)
+    #     logging.info(self.output_content(self.running_config['stderr']))
+    #     logging.info(self.output_content(self.running_config['stdout']))
+    #     self.assertEqual(self.result.verdict, Verdict.ACCEPTED)
+    #     self.submission.clean()
 
 
 if __name__ == '__main__':
