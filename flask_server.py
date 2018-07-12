@@ -151,17 +151,17 @@ def judge():
     fingerprint = data['fingerprint']
 
     cache.set(fingerprint, {'verdict': Verdict.WAITING.value}, timeout=3600)
-    p = judge_handler(fingerprint, data['code'], data['lang'], data['cases'],
-                      data['max_time'], data['max_memory'],
-                      checker_fingerprint=data.get('checker', ''),
-                      interactor_fingerprint=data.get('interactor'),
-                      run_until_complete=data.get('run_until_complete', False),
-                      group_list=data.get('group_list'),
-                      group_dependencies=data.get('group_dependencies'))
+    args = (fingerprint, data['code'], data['lang'], data['cases'],
+            data['max_time'], data['max_memory'],)
+    kwargs = dict(checker_fingerprint=data.get('checker', ''),
+                  interactor_fingerprint=data.get('interactor'),
+                  run_until_complete=data.get('run_until_complete', False),
+                  group_list=data.get('group_list'),
+                  group_dependencies=data.get('group_dependencies'))
     if hold:
-        return jsonify(p.get())
+        return jsonify(judge_handler(*args, **kwargs))
     else:
-        threading.Thread(target=p.get).start()
+        threading.Thread(target=judge_handler, args=args, kwargs=kwargs).start()
         return response_ok()
 
 

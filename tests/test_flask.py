@@ -22,11 +22,14 @@ from config.config import SUB_BASE
 from handler import trace_group_dependencies
 
 
+URL_BASE = 'http://localhost:5010'
+
+
 class FlaskTest(TestBase):
 
     def setUp(self):
         self.workspace = '/tmp/flask'
-        self.url_base = 'http://localhost:5000'
+        self.url_base = URL_BASE
         self.token = ('ejudge', 'naive') # Token has to be reset to do this test
         super().setUp()
 
@@ -36,7 +39,7 @@ class FlaskTest(TestBase):
         self.assertEqual({3: {1, 3, 4, 5, 6, 7}, 4: {1, 4, 5, 6, 7}, 5: {1, 5, 6, 7}, 6: {1, 6, 7}, 7: {1, 7}},
                          trace_group_dependencies([(1,7),(7,6),(6,5),(5,4),(4,3)]))
         self.assertEqual({1: {1, 3}, 2: {2, 3}}, trace_group_dependencies([(3, 1), (3, 2)]))
-        self.assertEqual({1: {1, 2, 3, 4}, 2: {2, 4}, 3: {3, 4}, 4: {4}},
+        self.assertEqual({1: {1, 2, 3, 4}, 2: {2, 4}, 3: {3, 4}},
                          trace_group_dependencies([(2, 1), (3, 1), (4, 2), (4, 3)]))
 
     def test_upload_success(self):
@@ -164,6 +167,17 @@ class FlaskTest(TestBase):
         self.assertEqual(self.judge_aplusb(self.read_content('./submission/aplusb.cpp'), 'cpp', False), Verdict.ACCEPTED.value)
         self.assertEqual(self.judge_aplusb(self.read_content('./submission/aplusb2.cpp'), 'cpp', False),
                          Verdict.ACCEPTED.value)
+
+    def test_aplusb_multiple_files(self):
+        self.assertEqual(self.judge_aplusb({
+            "aplusb1.cc": {"code": self.read_content('./submission/aplusb1.cc'), "compile": True},
+            "aplusb1.h": {"code": self.read_content('./submission/aplusb1.h')}
+        }, 'cpp'), Verdict.ACCEPTED.value)
+        self.assertEqual(self.judge_aplusb({
+            "aplusb2.cc": {"code": self.read_content('./submission/aplusb2.cc'), "compile": True},
+            "aplusb3.cc": {"code": self.read_content('./submission/aplusb3.cc'), "compile": True},
+            "aplusb2.h": {"code": self.read_content('./submission/aplusb2.h')}
+        }, 'cpp'), Verdict.ACCEPTED.value)
 
     def test_aplusb_judge_traceback(self):
         judge_upload = dict(fingerprint=self.rand_str(True), lang='cpp', code='',

@@ -64,7 +64,7 @@ class TrustedSubmission(Submission):
             # The following follows testlib's convention
             if checker_result.exit_code == 3:
                 return Verdict.JUDGE_ERROR
-            if checker_result.exit_code == 5:
+            if checker_result.exit_code == 7:
                 return Verdict.POINT
             if checker_result.verdict != Verdict.RUNTIME_ERROR:
                 return checker_result.verdict

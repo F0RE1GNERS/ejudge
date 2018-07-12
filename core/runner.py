@@ -80,6 +80,7 @@ class CaseRunner(object):
         result['message'] = checker_result.message
         if checker_result.verdict == Verdict.POINT:
             try:
+                print(result['message'])
                 result['point'] = float(result['message'].lstrip().split(maxsplit=2)[1])
             except:
                 result['point'] = 0.0

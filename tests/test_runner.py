@@ -106,6 +106,21 @@ class RunnerTest(TestBase):
         result = case_runner.run(case)
         self.assertEqual(result['verdict'], Verdict.WRONG_ANSWER)
 
+    def test_aplusb_points(self):
+        code = self.read_content('./submission/aplusb.cpp')
+        checker_code = self.read_content('./submission/ncmp_points.cpp')
+        case = Case(self.rand_str(True))
+        case.write_input_binary(b"1\n2\n")
+        case.write_output_binary(b"3\n")
+        checker = Checker(self.rand_str(True), checker_code, 'cc14')
+        submission = Submission(self.rand_str(True), code, 'cc14')
+        case_runner = CaseRunner(submission, checker, 1, 128)
+        result = case_runner.run(case)
+        print(result)
+        self.assertEqual(result['verdict'], Verdict.POINT)
+        self.assertIn('point', result)
+        print(result)
+
     def test_interactive_bad_submission(self):
         code = self.read_content('./interact/a-plus-b-nonstop.py')
         checker_code = self.read_content('./submission/ncmp.cpp')

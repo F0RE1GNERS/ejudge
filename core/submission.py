@@ -18,12 +18,6 @@ class Submission(object):
         language_config = LANGUAGE_CONFIG[lang]
         self.code_file = path.join(self.workspace, language_config['code_file'])
         object_file_name = language_config.get('object_file', 'foo')
-        path_config = {
-            'exe_path': path.join(self.workspace, object_file_name),
-            'code_path': self.code_file,
-            'workspace': self.workspace,
-            'max_memory': '{max_memory}'
-        }
 
         old_submission = True
         if not path.exists(self.workspace):
@@ -32,7 +26,7 @@ class Submission(object):
             chown(self.workspace, COMPILER_USER_UID, COMPILER_GROUP_GID)
             if isinstance(code, dict):
                 self.code_file = []
-                for key, val in code:
+                for key, val in code.items():
                     # code should be like
                     # { "main.cpp": { "code": "...", "compile": true }, "helper.h": { ... "compile", false } }
                     file_path = path.join(self.workspace, key)
@@ -51,6 +45,12 @@ class Submission(object):
                 fs.write(lang)
             old_submission = False
 
+        path_config = {
+            'exe_path': path.join(self.workspace, object_file_name),
+            'code_path': self.code_file,
+            'workspace': self.workspace,
+            'max_memory': '{max_memory}'
+        }
         if language_config['type'] == 'compiler' and not old_submission:
             self.to_compile = True
             self.compiler_file = format(language_config['compiler_file'], **path_config)
