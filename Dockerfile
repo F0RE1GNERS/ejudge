@@ -8,6 +8,7 @@ RUN apt-get update \
                           gcc g++ git libtool python-pip libseccomp-dev cmake openjdk-8-jdk nginx redis-server \
                           mono-devel php gfortran perl ghc scala nodejs nodejs-legacy \
                           rustc fp-compiler clang pypy mono-complete ocaml-nox memcached libboost-all-dev \
+                          wget \
     && add-apt-repository ppa:ubuntu-toolchain-r/test \
     && apt-get update \
     && apt-get -y install g++-7 \
@@ -20,9 +21,7 @@ COPY . /ejudge
 WORKDIR /ejudge
 ENV LANG=en_US.UTF-8 LANGUAGE=en_US:en LC_ALL=en_US.UTF-8
 RUN useradd -r compiler \
-    && wget https://raw.githubusercontent.com/MikeMirzayanov/testlib/master/testlib.h -O lib/testlib.h \
-    && mkdir -p /usr/local/include \
-    && cp lib/testlib.h /usr/local/include/ \
+    && wget https://raw.githubusercontent.com/MikeMirzayanov/testlib/master/testlib.h -O /usr/local/include/testlib.h \
     && g++ -o lib/defaultspj lib/defaultspj.cpp -O2 -std=c++11 -lm \
     && cp sandbox/java_policy /etc/ \
     && mkdir -p run/data run/sub run/log \
