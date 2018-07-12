@@ -66,12 +66,15 @@ class TrustedSubmission(Submission):
         :return: an integer, one of the verdict
         """
         if checker_result.verdict != Verdict.ACCEPTED:
+            # The following follows testlib's convention
+            if checker_result.exit_code == 3:
+                return Verdict.JUDGE_ERROR
+            if checker_result.exit_code == 5:
+                return Verdict.POINT
             if checker_result.verdict != Verdict.RUNTIME_ERROR:
                 return checker_result.verdict
-            else:
-                return Verdict.WRONG_ANSWER
-        else:
-            return Verdict.ACCEPTED
+            return Verdict.WRONG_ANSWER
+        return Verdict.ACCEPTED
 
 
 class Checker(TrustedSubmission):

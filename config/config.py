@@ -46,6 +46,7 @@ class Verdict(Enum):
     SYSTEM_ERROR = 5
     COMPILE_ERROR = 6
     JUDGE_ERROR = 11
+    POINT = 12
 
 
 USUAL_READ_SIZE = 512

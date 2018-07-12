@@ -30,8 +30,23 @@ class Submission(object):
             # This is a new submission
             makedirs(self.workspace)
             chown(self.workspace, COMPILER_USER_UID, COMPILER_GROUP_GID)
-            with open(self.code_file, 'w') as fs:
-                fs.write(code)
+            if isinstance(code, dict):
+                self.code_file = []
+                for key, val in code:
+                    # code should be like
+                    # { "main.cpp": { "code": "...", "compile": true }, "helper.h": { ... "compile", false } }
+                    file_path = path.join(self.workspace, key)
+                    with open(file_path, 'w') as fs:
+                        fs.write(val["code"])
+                    if val.get("compile"):
+                        self.code_file.append(file_path)
+                if not self.code_file:
+                    raise ValueError("There should be at least one file to compile.")
+                if len(self.code_file) == 1:
+                    self.code_file = self.code_file[0]
+            else:
+                with open(self.code_file, 'w') as fs:
+                    fs.write(code)
             with open(path.join(self.workspace, 'LANG'), 'w') as fs:
                 fs.write(lang)
             old_submission = False
@@ -77,7 +92,7 @@ class Submission(object):
     def compile(self, max_time):
         error_path = path.join(self.workspace, "compiler_output_%s" % random_string())
         sandbox = Sandbox(self.compiler_file, self.compiler_args,
-                          stdin=self.code_file,
+                          stdin=self.code_file if isinstance(self.code_file, str) else "/dev/null",
                           stdout=error_path,
                           stderr=error_path,
                           max_time=max_time,

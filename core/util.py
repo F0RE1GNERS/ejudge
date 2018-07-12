@@ -33,7 +33,10 @@ def format(s, as_list=False, **kwargs):
     else:
         v = []
         for token in s.split(' '):
-            v.append(token.format(**kwargs))
+            if token.startswith("{") and token.endswith("}") and token[1:-1] in kwargs:
+                v.extend(kwargs[token[1:-1]])
+            else:
+                v.append(token.format(**kwargs))
         return list(filter(lambda x: x, v)) # filter out empty strings
 
 

@@ -78,6 +78,11 @@ class CaseRunner(object):
                                             self.max_time, self.max_memory)
         result['verdict'] = checker_result.verdict
         result['message'] = checker_result.message
+        if checker_result.verdict == Verdict.POINT:
+            try:
+                result['point'] = float(result['message'].lstrip().split(maxsplit=2)[1])
+            except:
+                result['point'] = 0.0
         result['time'] = running_result.time
         return result
 
