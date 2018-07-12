@@ -16,6 +16,12 @@ cc14:
   compiler_args: -O2 -std=c++14 -o {exe_path} {code_path} -DONLINE_JUDGE -lm -fmax-errors=3
   code_file: foo.cc
   execute_file: "{exe_path}"
+cc17:
+  type: compiler
+  compiler_file: /usr/bin/g++-7
+  compiler_args: -O2 -std=c++17 -o {exe_path} {code_path} -DONLINE_JUDGE -lm -fmax-errors=3
+  code_file: foo.cc
+  execute_file: "{exe_path}"
 cs:
   type: compiler
   compiler_file: /usr/bin/mcs
@@ -75,6 +81,12 @@ pypy:
   execute_file: /usr/bin/pypy
   execute_args: "{code_path}"
   seccomp_rule: py
+pypy3:
+  type: interpreter
+  code_file: foo.py
+  execute_file: /usr/local/bin/pypy3
+  execute_args: "{code_path}"
+  seccomp_rule: py
 php:
   type: interpreter
   code_file: "{code_path}"
@@ -112,3 +124,8 @@ ocaml:
   compiler_file: /usr/bin/ocamlc
   compiler_args: "{code_path} -o {exe_path}"
   execute_file: "{exe_path}"
+text:
+  type: interpreter
+  code_file: foo.txt
+  execute_file: /bin/cat
+  execute_args: "{code_path}"

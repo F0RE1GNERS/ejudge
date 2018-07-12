@@ -6,7 +6,9 @@ gunicorn
 gevent
 requests
 flask
-celery
 eventlet
 redis
 python-memcached
+numpy
+scipy
+scikit-learn

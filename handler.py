@@ -4,7 +4,6 @@ import traceback
 from io import StringIO
 from os import path
 
-from celery import Celery
 from flask import Flask
 from werkzeug.contrib.cache import MemcachedCache
 
@@ -23,9 +22,6 @@ flask_app.config['imports'] = ['handler']
 flask_app.config['SECRET_KEY'] = SECRET_KEY
 flask_app.config['worker_concurrency'] = MAX_WORKER_NUMBER
 flask_app.config['worker_max_tasks_per_child'] = MAX_TASKS_PER_CHILD
-
-celery = Celery(flask_app.name, broker=flask_app.config['broker_url'])
-celery.conf.update(flask_app.config)
 
 cache = MemcachedCache(['127.0.0.1:11211'])
 
@@ -56,9 +52,7 @@ def trace_group_dependencies(dep):
     return ret
 
 
-@celery.task(bind=True)
-def judge_handler(self,
-                  sub_fingerprint, sub_code, sub_lang,
+def judge_handler(sub_fingerprint, sub_code, sub_lang,
                   case_list, max_time, max_memory,
                   checker_fingerprint='',
                   interactor_fingerprint=None,

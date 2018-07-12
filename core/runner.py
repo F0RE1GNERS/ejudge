@@ -8,7 +8,7 @@
     - When submission fails to compile, a CompileError is raised; when trusted submission fails to compile, JUDGE_ERROR is returned.
 
 """
-
+import os
 import pickle
 from os import fork, pipe, _exit, close, fdopen
 import base64
@@ -138,6 +138,7 @@ class InteractiveRunner(CaseRunner):
         r, w = fdopen(r2, 'r'), fdopen(w1, 'w')
         r_report = fdopen(r_report, 'rb')
         running_result = self.submission.run(r, w, running_stderr, self.max_time, self.max_memory)
+        os.wait4(interactor_pid, os.WSTOPPED)
         interactor_result = pickle.load(r_report)
         r.close()
         w.close()
