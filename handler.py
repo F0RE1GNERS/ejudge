@@ -46,7 +46,7 @@ def trace_group_dependencies(dep):
     if dep is None:
         return ret
     for x, y in dep:
-        if y not in dep:
+        if y not in ret:
             ret[y] = set()
         ret[y].add(x)
     for start in ret.keys():
