@@ -78,6 +78,9 @@ class APlusBTest(TestBase):
     def test_pypy(self):
         pass
 
+    def test_pypy3(self):
+        pass
+
     def test_perl(self):
         pass
 

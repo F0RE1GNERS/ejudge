@@ -92,7 +92,7 @@ pypy3:
   code_file: foo.py
   execute_file: /usr/local/bin/pypy3
   execute_args: "{code_path}"
-  seccomp_rule: py
+  seccomp_rule: pypy
 php:
   type: interpreter
   code_file: "{code_path}"
