@@ -48,6 +48,7 @@ class Sandbox:
         :param uid:
         :param gid:
         """
+        self.seccomp_rule = str(seccomp_rule)
         self.execute_file = execute_file
         self.execute_args = list(execute_args)
         self.max_cpu_time = float(max_time)
@@ -59,7 +60,6 @@ class Sandbox:
         self.stdin, self.stdout, self.stderr = try_to_open_file((stdin, 'r'), (stdout, 'w'), (stderr, 'w'))
         self.env = env if env else {}
 
-        self.seccomp_rule = str(seccomp_rule)
         self.uid = int(uid)
         self.gid = int(gid)
 
@@ -72,12 +72,14 @@ class Sandbox:
         if self.max_cpu_time > 0:
             resource.setrlimit(resource.RLIMIT_CPU, (int(self.max_cpu_time + 1), int(self.max_cpu_time + 1)))
         if self.max_memory > 0:
-            resource.setrlimit(resource.RLIMIT_AS, (int(self.max_memory * 2), int(self.max_memory * 2)))
+            if self.seccomp_rule != "scipy":
+                resource.setrlimit(resource.RLIMIT_AS, (int(self.max_memory * 2), int(self.max_memory * 2)))
             resource.setrlimit(resource.RLIMIT_STACK, (int(self.max_memory * 2), int(self.max_memory * 2)))
         if self.max_output_size > 0:
             resource.setrlimit(resource.RLIMIT_FSIZE, (int(self.max_output_size), int(self.max_output_size)))
         if self.max_process_number > 0:
-            resource.setrlimit(resource.RLIMIT_NPROC, (self.max_process_number, self.max_process_number))
+            if self.seccomp_rule != "scipy":
+                resource.setrlimit(resource.RLIMIT_NPROC, (self.max_process_number, self.max_process_number))
 
     def redirect_input_and_output(self):
         # use number instead of function to prevent errors in Celery

@@ -116,9 +116,9 @@ class RunnerTest(TestBase):
         submission = Submission(self.rand_str(True), code, 'cc14')
         case_runner = CaseRunner(submission, checker, 1, 128)
         result = case_runner.run(case)
-        print(result)
         self.assertEqual(result['verdict'], Verdict.POINT)
         self.assertIn('point', result)
+        self.assertNotEqual(result['point'], 0.0)
         print(result)
 
     def test_interactive_bad_submission(self):

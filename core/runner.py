@@ -81,7 +81,7 @@ class CaseRunner(object):
         if checker_result.verdict == Verdict.POINT:
             try:
                 print(result['message'])
-                result['point'] = float(result['message'].lstrip().split(maxsplit=2)[1])
+                result['point'] = float(result['message'].lstrip().split(maxsplit=1)[0])
             except:
                 result['point'] = 0.0
         result['time'] = running_result.time

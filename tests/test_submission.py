@@ -140,25 +140,24 @@ class TrustedSubmissionTest(TestBase):
         print(self.output_content(self.running_config['stdout']))
         self.submission.clean()
 
-    # TODO: python library limitations break
-    # def test_python_library(self):
-    #     self.running_config = {
-    #         'stdin': '/dev/null',
-    #         'stdout': self.output_path(),
-    #         'stderr': self.output_path(),
-    #         'max_time': 3,
-    #         'max_memory': 512,
-    #     }
-    #
-    #     code = self.read_content('./submission/numpy-test.py')
-    #     fingerprint = self.rand_str()
-    #
-    #     self.submission = Submission(fingerprint, code, 'python')
-    #     self.result = self.submission.run(**self.running_config)
-    #     logging.info(self.output_content(self.running_config['stderr']))
-    #     logging.info(self.output_content(self.running_config['stdout']))
-    #     self.assertEqual(self.result.verdict, Verdict.ACCEPTED)
-    #     self.submission.clean()
+    def test_python_library(self):
+        self.running_config = {
+            'stdin': '/dev/null',
+            'stdout': self.output_path(),
+            'stderr': self.output_path(),
+            'max_time': 3,
+            'max_memory': 512,
+        }
+
+        code = self.read_content('./submission/numpy-test.py')
+        fingerprint = self.rand_str()
+
+        self.submission = Submission(fingerprint, code, 'scipy')
+        self.result = self.submission.run(**self.running_config)
+        logging.info(self.output_content(self.running_config['stderr']))
+        logging.info(self.output_content(self.running_config['stdout']))
+        self.assertEqual(self.result.verdict, Verdict.ACCEPTED)
+        self.submission.clean()
 
 
 if __name__ == '__main__':

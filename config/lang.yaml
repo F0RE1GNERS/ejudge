@@ -75,6 +75,12 @@ python:
   execute_file: /usr/bin/python3
   execute_args: "{code_path}"
   seccomp_rule: py
+scipy:
+  type: interpreter
+  code_file: foo.py
+  execute_file: /usr/bin/python3
+  execute_args: "{code_path}"
+  seccomp_rule: scipy
 pypy:
   type: interpreter
   code_file: foo.py

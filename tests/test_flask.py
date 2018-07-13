@@ -179,6 +179,12 @@ class FlaskTest(TestBase):
             "aplusb2.h": {"code": self.read_content('./submission/aplusb2.h')}
         }, 'cpp'), Verdict.ACCEPTED.value)
 
+    def test_aplusb_multiple_java(self):
+        self.assertEqual(self.judge_aplusb({
+            "Main.java": {"code": self.read_content('./submission/aplusb1.java'), "compile": True},
+            "aplusb2.java": {"code": self.read_content('./submission/aplusb2.java'), "compile": True},
+        }, 'java'), Verdict.ACCEPTED.value)
+
     def test_aplusb_judge_traceback(self):
         judge_upload = dict(fingerprint=self.rand_str(True), lang='cpp', code='',
                             cases=[], max_time=1, max_memory=128, checker='ttt', hold=False)
