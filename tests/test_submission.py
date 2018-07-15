@@ -33,6 +33,8 @@ class APlusBTest(TestBase):
 
         self.submission = Submission(fingerprint, code, lang)
         self.result = self.submission.run(**self.running_config)
+        if self.result.verdict != Verdict.ACCEPTED:
+            print(self.output_content(self.running_config['stderr']))
         self.assertEqual(self.result.verdict, Verdict.ACCEPTED)
         self.assertEqual('3', self.output_content(self.running_config['stdout']).strip())
 
