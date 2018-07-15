@@ -30,7 +30,9 @@ RUN useradd -r compiler \
     && python3 install_defaultspj.py \
     && chmod 600 config/* \
     && chmod +x run.sh \
+    && cd /ejudge/tests && python3 test_submission.py \
     && cd /ejudge \
+    && rm -rf run/data run/sub run/log \
     && mkdir -p run/data run/sub run/log
 VOLUME /ejudge
 EXPOSE 5000
