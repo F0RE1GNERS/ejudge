@@ -99,8 +99,6 @@ class Sandbox:
             seccomp_rule_general(self.execute_file, ["fork", "vfork"], ["execve"])
         elif self.seccomp_rule == 'py':
             seccomp_rule_general(self.execute_file, ["fork", "vfork", "kill"], ["execve", "open"])
-        elif self.seccomp_rule == 'pypy':
-            seccomp_rule_general(self.execute_file, ["kill"], [])
         elif self.seccomp_rule == 'js':
             seccomp_rule_general(self.execute_file, ["socket", "fork", "vfork", "kill"], ["execve", "open"])
         # No such thing for Java :)
