@@ -78,7 +78,7 @@ class Sandbox:
         if self.max_output_size > 0:
             resource.setrlimit(resource.RLIMIT_FSIZE, (int(self.max_output_size), int(self.max_output_size)))
         if self.max_process_number > 0:
-            if self.seccomp_rule != "scipy":
+            if self.seccomp_rule not in ["scipy", "pypy"]:
                 resource.setrlimit(resource.RLIMIT_NPROC, (self.max_process_number, self.max_process_number))
 
     def redirect_input_and_output(self):
