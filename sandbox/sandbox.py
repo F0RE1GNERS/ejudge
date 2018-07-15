@@ -69,8 +69,6 @@ class Sandbox:
         self.stderr.close()
 
     def set_resource_limit(self):
-        if self.seccomp_rule == "pypy":
-            return
         if self.max_cpu_time > 0:
             resource.setrlimit(resource.RLIMIT_CPU, (int(self.max_cpu_time + 1), int(self.max_cpu_time + 1)))
         if self.max_memory > 0:
@@ -80,7 +78,7 @@ class Sandbox:
         if self.max_output_size > 0:
             resource.setrlimit(resource.RLIMIT_FSIZE, (int(self.max_output_size), int(self.max_output_size)))
         if self.max_process_number > 0:
-            if self.seccomp_rule not in ["scipy", "pypy"]:
+            if self.seccomp_rule != "scipy":
                 resource.setrlimit(resource.RLIMIT_NPROC, (self.max_process_number, self.max_process_number))
 
     def redirect_input_and_output(self):
@@ -101,6 +99,8 @@ class Sandbox:
             seccomp_rule_general(self.execute_file, ["fork", "vfork"], ["execve"])
         elif self.seccomp_rule == 'py':
             seccomp_rule_general(self.execute_file, ["fork", "vfork", "kill"], ["execve", "open"])
+        elif self.seccomp_rule == 'pypy':
+            seccomp_rule_general(self.execute_file, ["clone", "fork", "vfork", "kill"], ["execve"])
         elif self.seccomp_rule == 'js':
             seccomp_rule_general(self.execute_file, ["socket", "fork", "vfork", "kill"], ["execve", "open"])
         # No such thing for Java :)
