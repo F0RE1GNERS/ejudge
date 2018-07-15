@@ -69,6 +69,8 @@ class Sandbox:
         self.stderr.close()
 
     def set_resource_limit(self):
+        if self.seccomp_rule == "pypy":
+            return
         if self.max_cpu_time > 0:
             resource.setrlimit(resource.RLIMIT_CPU, (int(self.max_cpu_time + 1), int(self.max_cpu_time + 1)))
         if self.max_memory > 0:
