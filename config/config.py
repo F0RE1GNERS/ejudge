@@ -45,8 +45,8 @@ class Verdict(Enum):
     RUNTIME_ERROR = 4
     SYSTEM_ERROR = 5
     COMPILE_ERROR = 6
+    POINT = 7
     JUDGE_ERROR = 11
-    POINT = 12
 
 
 USUAL_READ_SIZE = 512
