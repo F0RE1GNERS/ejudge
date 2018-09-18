@@ -1,0 +1,4 @@
+big
+small
+small
+equal

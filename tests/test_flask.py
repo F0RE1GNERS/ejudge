@@ -22,7 +22,7 @@ from config.config import SUB_BASE
 from handler import trace_group_dependencies
 
 
-URL_BASE = 'http://localhost:5010'
+URL_BASE = 'http://localhost:5000'
 
 
 class FlaskTest(TestBase):
@@ -215,6 +215,43 @@ class FlaskTest(TestBase):
     def test_aplusb_judge_group_ac(self):
         self.assertEqual(self.judge_aplusb_group(self.read_content('./submission/aplusb.cpp'), 'cpp', [(2, 1)]),
                          Verdict.ACCEPTED.value)
+
+    def test_judge_interactive_ile(self):
+        checker_fingerprint = self.rand_str(True)
+        interactor_fingerprint = self.rand_str(True)
+        case_fingerprints = [self.rand_str(True)]
+
+        response = requests.post(self.url_base + '/upload/case/%s/input' % case_fingerprints[0],
+                                 data=self.read_content('./interact/guess-input.txt', 'rb'),
+                                 auth=self.token)
+        self.assertEqual(response.json()['status'], 'received')
+        response = requests.post(self.url_base + '/upload/case/%s/output' % case_fingerprints[0],
+                                 data=self.read_content('./interact/guess-output.txt', 'rb'),
+                                 auth=self.token)
+        self.assertEqual(response.json()['status'], 'received')
+
+        checker_dict = dict(fingerprint=checker_fingerprint, lang='cpp',
+                            code=self.read_content('./interact/guess-checker.cpp'))
+        response = requests.post(self.url_base + "/upload/checker",
+                                 json=checker_dict, auth=self.token)
+        self.assertEqual(response.json()['status'], 'received')
+
+        interactor_dict = dict(fingerprint=interactor_fingerprint, lang='cpp',
+                            code=self.read_content('./interact/guess-interactor.cpp'))
+        response = requests.post(self.url_base + "/upload/interactor",
+                                 json=interactor_dict, auth=self.token)
+        self.assertEqual(response.json()['status'], 'received')
+
+        judge_upload = dict(fingerprint=self.rand_str(True), lang='cpp',
+                            code=self.read_content('./interact/guess-bad.cpp'),
+                            cases=case_fingerprints, max_time=1, max_memory=128, checker=checker_fingerprint,
+                            interactor=interactor_fingerprint
+                            )
+
+        result = requests.post(self.url_base + '/judge', json=judge_upload,
+                               auth=self.token).json()
+        logging.warning(result)
+        return result['verdict']
 
 
 if __name__ == '__main__':
