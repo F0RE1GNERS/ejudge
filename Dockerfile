@@ -23,16 +23,11 @@ WORKDIR /ejudge
 ENV LANG=en_US.UTF-8 LANGUAGE=en_US:en LC_ALL=en_US.UTF-8
 RUN useradd -r compiler \
     && wget https://raw.githubusercontent.com/MikeMirzayanov/testlib/master/testlib.h -O /usr/local/include/testlib.h \
-    && g++ -o lib/defaultspj lib/defaultspj.cpp -O2 -std=c++11 -lm \
     && cp sandbox/java_policy /etc/ \
-    && mkdir -p run/data run/sub run/log \
     && pip3 install -r requirements.txt \
     && python3 setup.py build_ext --inplace \
-    && python3 install_defaultspj.py \
     && chmod 600 config/* \
-    && chmod +x run.sh \
-    && cd /ejudge/tests && python3 test_submission.py
-VOLUME /ejudge
+    && chmod +x run.sh
 EXPOSE 5000
 
 CMD ./run.sh
