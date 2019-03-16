@@ -5,8 +5,7 @@ ENV DEBIAN_FRONTEND noninteractive
 RUN apt-get update \
     && apt-get -y install software-properties-common python-software-properties python python-dev python-pip \
                           locales python3-software-properties python3 python3-dev python3-pip \
-                          gcc g++ git libtool python-pip cmake openjdk-8-jdk nginx redis-server \
-                          fp-compiler pypy memcached libboost-all-dev wget \
+                          gcc g++ git libtool python-pip cmake openjdk-8-jdk fp-compiler pypy libboost-all-dev wget \
     && cd /lib && wget https://bitbucket.org/pypy/pypy/downloads/pypy3.6-v7.0.0-linux64.tar.bz2 \
     && tar -xvf pypy3.6-v7.0.0-linux64.tar.bz2 \
     && ln -s /lib/pypy3.6-v7.0.0-linux64/bin/pypy3 /usr/local/bin/pypy3 \

@@ -184,7 +184,7 @@ class Submission(object):
             tag, num = line.strip().split()
             usage[tag] = int(num)
 
-        result = Result(usage["user"] / 1000, usage["memory"] / 1024, usage["exit"], usage["signal"])
+        result = Result(round(usage["user"] / 1000, 3), round(usage["memory"] / 1024, 3), usage["exit"], usage["signal"])
         if result.exit_code != 0:
           result.verdict = Verdict.RUNTIME_ERROR
         if result.memory > max_memory > 0:

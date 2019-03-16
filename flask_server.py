@@ -4,13 +4,15 @@ import threading
 from functools import wraps
 
 import yaml
-from flask import request, Response, jsonify
+from flask import request, Response, jsonify, Flask
 
 from config.config import TOKEN_FILE, Verdict
 from core.case import Case
 from core.judge import SpecialJudge
-from handler import flask_app, judge_handler
+from handler import judge_handler
 from handler import reject_with_traceback, cache
+
+flask_app = Flask(__name__)
 
 
 @flask_app.route('/ping')

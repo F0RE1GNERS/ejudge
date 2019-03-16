@@ -1,11 +1,9 @@
 import os
-import shutil
-from os import pipe, path
+from os import pipe
 from threading import Thread
 
 from config.config import Verdict
 from core.runner import CaseRunner
-from core.util import random_string
 
 
 def stream_proxy_run(record_file_name, input_fd, output_fd):
@@ -79,7 +77,7 @@ class InteractiveRunner(CaseRunner):
       result = self.running_fail_result(running_result)
       checker_message = result.get('message', '')
     elif interactor_result.verdict != Verdict.ACCEPTED:
-      result = {'verdict': interactor_result.verdict}
+      result = {"verdict": interactor_result.verdict, "time": running_result.time, "memory": running_result.memory}
       checker_message = self.get_message_from_file(interactor_result_file)
     else:
       result = self.do_check(running_output, running_result)

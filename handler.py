@@ -1,7 +1,6 @@
 import traceback
 from io import StringIO
 
-from flask import Flask
 from werkzeug.contrib.cache import MemcachedCache
 
 from config.config import Verdict, TRACEBACK_LIMIT
@@ -12,7 +11,6 @@ from core.judge import SpecialJudge
 from core.runner import CaseRunner
 from core.submission import Submission
 
-flask_app = Flask(__name__)
 
 cache = MemcachedCache(['127.0.0.1:11211'])
 
@@ -63,14 +61,16 @@ def judge_handler(sub_fingerprint, sub_code, sub_lang,
       response = {'status': 'received', 'verdict': Verdict.JUDGING.value, 'detail': detail}
       sum_verdict_value = Verdict.ACCEPTED.value
       time_verdict = -1
+      memory_verdict = -1
 
+      report = StringIO()
       submission = Submission(sub_lang)
       submission.compile(sub_code, max(max_time * 5, 15))
 
       if not checker_fingerprint:
         checker_fingerprint = 'defaultspj'
       checker = SpecialJudge.fromExistingFingerprint(checker_fingerprint)
-      report = StringIO()
+
       if interactor_fingerprint:
         interactor = SpecialJudge.fromExistingFingerprint(interactor_fingerprint)
         case_runner = InteractiveRunner(submission, interactor, checker, max_time, max_memory, report_file=report)
@@ -94,6 +94,8 @@ def judge_handler(sub_fingerprint, sub_code, sub_lang,
         cache.set(sub_fingerprint, response, timeout=3600)
         if case_result.get('time'):
           time_verdict = max(time_verdict, case_result['time'])
+        if case_result.get('memory'):
+          memory_verdict = max(memory_verdict, case_result['memory'])
         if case_result['verdict'] != Verdict.ACCEPTED.value:
           if sum_verdict_value == Verdict.ACCEPTED.value:
             sum_verdict_value = case_result['verdict']
@@ -107,9 +109,9 @@ def judge_handler(sub_fingerprint, sub_code, sub_lang,
     response.update(verdict=sum_verdict_value)
     if time_verdict >= 0:
       response.update(time=time_verdict)
+    if memory_verdict >= 0:
+      response.update(memory=memory_verdict)
     cache.set('report_%s' % sub_fingerprint, report.getvalue(), timeout=1800)
-    case_runner.clean()
-    submission.clean()
   except:
     response = reject_with_traceback()
   finally:

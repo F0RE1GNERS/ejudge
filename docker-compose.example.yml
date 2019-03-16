@@ -1,5 +1,9 @@
 version: 3
 services:
+  ejudge-memcached:
+    image: memcached:1.5-alpine
+    restart: always
+
   ejudge-app:
     image: registry.cn-hangzhou.aliyuncs.com/ultmaster/ejudge:v3
     privileged: true

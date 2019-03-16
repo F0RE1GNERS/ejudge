@@ -77,10 +77,11 @@ class CaseRunner(object):
   def running_fail_result(self, running_result):
     assert running_result.verdict != Verdict.ACCEPTED
     result = dict()
-    result['verdict'] = running_result.verdict
-    result['time'] = running_result.time
+    result["verdict"] = running_result.verdict
+    result["time"] = running_result.time
+    result["memory"] = running_result.memory
     if running_result.verdict == Verdict.RUNTIME_ERROR:
-      result['message'] = get_signal_name(running_result.signal)
+      result["message"] = get_signal_name(running_result.signal)
     return result
 
   def do_check(self, running_output, running_result):
@@ -97,10 +98,11 @@ class CaseRunner(object):
     result["verdict"] = self.checker.get_verdict_from_test_result(checker_result)
     if result["verdict"] == Verdict.POINT:
       try:
-        result['point'] = float(result['message'].lstrip().split(maxsplit=1)[0])
+        result["point"] = float(result["message"].lstrip().split(maxsplit=1)[0])
       except:
-        result['point'] = 0.0
-    result['time'] = running_result.time
+        result["point"] = 0.0
+    result["time"] = running_result.time
+    result["memory"] = running_result.memory
     return result
 
   def write_report(self, running_output, running_stderr, running_result, final_result, checker_message,
