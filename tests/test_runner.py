@@ -8,7 +8,8 @@ logging.basicConfig(level=logging.INFO)
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from core.case import Case
-from core.runner import CaseRunner, InteractiveRunner
+from core.runner import CaseRunner
+from core.interaction import InteractiveRunner
 from core.submission import Submission
 from core.judge import Checker, Interactor
 from core.exception import CompileError

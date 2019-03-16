@@ -9,6 +9,7 @@ using namespace std;
 #define FAIL_EXIT_CODE 3
 
 FILE *ouf, *ans, *ret;
+bool returnDetected;
 
 inline bool isLineEnding(char c) {
     return c == '\r' || c == '\n';
@@ -36,7 +37,15 @@ public:
 
     inline int nextchar(char &r) {
         if (p1 == p2 && (p2 = (p1 = buf) + fread(buf, 1, BUFFER_SIZE, file), p1 == p2)) return 0;
-        r = *p1++; if (r == '\n') lineCount++; return 1;
+        r = *p1++;
+        if (r == '\r') {
+            if (!returnDetected) {
+                returnDetected = true;
+                fprintf(ret, "warning: \\r detected\n");
+            }
+        }
+        if (r == '\n') lineCount++;
+        return 1;
     }
 
     inline string compress() {

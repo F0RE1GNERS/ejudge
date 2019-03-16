@@ -1,7 +1,5 @@
-cython
 psutil
 pyyaml
-websockets
 gunicorn
 gevent
 requests

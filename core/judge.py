@@ -28,106 +28,63 @@
 
     Note that in both checker and interactor, our implementation does not support variable-length args after Result_File.
 
-    Just like submissions return Sandbox.Result directly, trusted submissions return TrustedSubmission.Result.
+    Just like submissions return Sandbox.Result directly, trusted submissions return SpecialJudge.Result.
     The result contains two arguments, namely:
     - verdict: directly defined in config.config, can be used as the final verdict
     - message: compile error message and, most importantly, result file content (first 512 bytes)
 
 """
+from os import path, listdir
 
 from core.submission import Submission
 from core.exception import CompileError
-from config.config import LIB_BASE, Verdict, DEVNULL, COMPILE_TIME_FACTOR, REAL_TIME_FACTOR
+from config.config import LIB_BASE, Verdict, DEVNULL, SPJ_BASE, LANGUAGE_CONFIG
 
 
-class TrustedSubmission(Submission):
+class SpecialJudge(Submission):
+  class Result:
 
-    class Result:
+    def __init__(self, verdict, message):
+      self.verdict = verdict
+      self.message = message
 
-        def __init__(self, verdict, message):
-            self.verdict = verdict
-            self.message = message
+    def __repr__(self):
+      return "SpecialJudge.Result object: " + str(self.__dict__)
 
-        def __repr__(self):
-            return "TrustedSubmission.Result object: " + str(self.__dict__)
+  def __init__(self, fingerprint, lang, exe_file=None):
+    if exe_file is None:
+      exe_file = path.join(SPJ_BASE, fingerprint + "." + LANGUAGE_CONFIG[lang]["exe_ext"])
+    super().__init__(fingerprint, lang, exe_file)
 
-    def run(self, stdin, stdout, stderr, max_time, max_memory, **kwargs):
-        kwargs.pop('trusted', None)
-        return super().run(stdin, stdout, stderr, max_time, max_memory, trusted=True, **kwargs)
+  @classmethod
+  def fromExistingFingerprint(cls, fingerprint):
+    exe_file, lang = None, None
+    for file in listdir(SPJ_BASE):
+      if file.startswith(fingerprint + "."):
+        exe_file = path.join(SPJ_BASE, file)
+        break
+    if not exe_file:
+      raise FileNotFoundError("SPJ fingerprint does not exist")
+    file_ext = exe_file.split(".")[-1]
+    for candidate_lang in LANGUAGE_CONFIG:
+      if LANGUAGE_CONFIG[candidate_lang]["exe_ext"] == file_ext:
+        lang = candidate_lang
+    if not lang:
+      raise FileNotFoundError("SPJ language not recognized")
+    return cls(fingerprint, lang, exe_file)
 
-    def get_verdict_from_test_result(self, checker_result):
-        """
-        :param checker_result: a Sandbox.Result directly returned from checker running
-        :return: an integer, one of the verdict
-        """
-        if checker_result.verdict != Verdict.ACCEPTED:
-            # The following follows testlib's convention
-            if checker_result.exit_code == 3:
-                return Verdict.JUDGE_ERROR
-            if checker_result.exit_code == 7:
-                return Verdict.POINT
-            if checker_result.verdict != Verdict.RUNTIME_ERROR:
-                return checker_result.verdict
-            return Verdict.WRONG_ANSWER
-        return Verdict.ACCEPTED
-
-
-class Checker(TrustedSubmission):
-
-    def check(self, input_file, output_file, answer_file, max_time, max_memory):
-        result_file = self.make_a_file_to_write()
-        try:
-            checker_result = self.run(DEVNULL, DEVNULL, DEVNULL, max_time, max_memory,
-                                      command_line_args=[input_file, output_file, answer_file, result_file])
-            message = self.get_message_from_file(result_file, cleanup=True)
-            verdict = self.get_verdict_from_test_result(checker_result)
-            return Checker.Result(verdict, message)
-        except CompileError as e:
-            return Checker.Result(Verdict.JUDGE_ERROR, e.detail)
-
-
-class Interactor(TrustedSubmission):
-
-    def interact(self, pipe_for_stdin, pipe_for_stdout, input_file, output_file, answer_file, max_time, max_memory, queue=None):
-        """
-
-        :param queue: queue is for putting the result of function since interactor and submission need to be run simultaneously
-        :return:
-        """
-        result_file = self.make_a_file_to_write()
-        try:
-            interactor_result = self.run(pipe_for_stdin, pipe_for_stdout, DEVNULL, max_time, max_memory,
-                                         command_line_args=[input_file, output_file, answer_file, result_file])
-            message = self.get_message_from_file(result_file, cleanup=True)
-            verdict = self.get_verdict_from_test_result(interactor_result)
-            return_val = Interactor.Result(verdict, message)
-        except CompileError as e:
-            return_val = Verdict.JUDGE_ERROR, e.detail
-        if queue:
-            queue.put(return_val)
-        return return_val
-
-
-class Generator(TrustedSubmission):
-
-    def generate(self, output_file, max_time, max_memory, command_line_args):
-        try:
-            generator_result = self.run(DEVNULL, output_file, DEVNULL, max_time, max_memory,
-                                        command_line_args=command_line_args)
-            verdict = self.get_verdict_from_test_result(generator_result)
-            return Generator.Result(verdict, '')
-        except CompileError as e:
-            return Generator.Result(Verdict.JUDGE_ERROR, e.detail)
-
-
-class Validator(TrustedSubmission):
-
-    def validate(self, validate_input, max_time, max_memory):
-        result_file = self.make_a_file_to_write()
-        try:
-            validate_result = self.run(validate_input, result_file, DEVNULL, max_time, max_memory)
-            message = self.get_message_from_file(result_file, cleanup=True)
-            verdict = self.get_verdict_from_test_result(validate_result)
-            return Validator.Result(verdict, message)
-        except CompileError as e:
-            return Validator.Result(Verdict.JUDGE_ERROR, e.detail)
+  def get_verdict_from_test_result(self, checker_result):
+    """
+    :param checker_result: a Sandbox.Result directly returned from checker running
+    :return: an integer, one of the verdict
+    """
+    if checker_result.verdict != Verdict.ACCEPTED:
+      # The following follows testlib's convention
+      if checker_result.exit_code == 3:
+        return Verdict.JUDGE_ERROR
+      if checker_result.exit_code == 7:
+        return Verdict.POINT
+      if checker_result.verdict != Verdict.RUNTIME_ERROR:
+        return checker_result.verdict
+      return Verdict.WRONG_ANSWER
+    return Verdict.ACCEPTED

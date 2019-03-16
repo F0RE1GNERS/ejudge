@@ -1,2 +1,5 @@
 *.out
 seccomp.c*
+venv
+.idea
+

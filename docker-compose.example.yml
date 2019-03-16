@@ -1,0 +1,16 @@
+version: 3
+services:
+  ejudge-app:
+    env:
+      TRACEBACK_LIMIT: 5
+      USUAL_READ_SIZE: 512
+      REAL_TIME_FACTOR: 2
+      OUTPUT_LIMIT: 256
+      USERNAME: ejudge
+      PASSWORD: naive
+    volumes:
+      - /hd1/data:/run/data:ro
+      - /hd1/ejudge/spj:/run/spj
+      - /hd1/ejudge/log:/run/log
+    port:
+      - 0.0.0.0:5000:5000
