@@ -17,7 +17,7 @@ TOKEN_FILE = path.join(_CONFIG_BASE, 'token.yaml')
 NSJAIL_PATH = path.join(PROJECT_BASE, "nsjail", "nsjail")
 
 with open(path.join(_CONFIG_BASE, 'lang.yaml')) as language_config:
-  LANGUAGE_CONFIG = yaml.load(language_config.read())
+  LANGUAGE_CONFIG = yaml.safe_load(language_config.read())
 
 RUN_USER_UID = getpwnam("nobody").pw_uid
 RUN_GROUP_GID = getgrnam("nogroup").gr_gid
@@ -51,8 +51,8 @@ class Verdict(Enum):
   JUDGE_ERROR = 11
 
 
-USUAL_READ_SIZE = int(os.environ["USUAL_READ_SIZE"])
-TRACEBACK_LIMIT = int(os.environ["TRACEBACK_LIMIT"])
-COMPILE_MAX_TIME_FOR_TRUSTED = int(os.environ["COMPILE_MAX_TIME_FOR_TRUSTED"])
-REAL_TIME_FACTOR = os.environ["REAL_TIME_FACTOR"]
-OUTPUT_LIMIT = int(os.environ["OUTPUT_LIMIT"])
+USUAL_READ_SIZE = int(os.environ.get("USUAL_READ_SIZE", 512))
+TRACEBACK_LIMIT = int(os.environ.get("TRACEBACK_LIMIT", 5))
+COMPILE_MAX_TIME_FOR_TRUSTED = int(os.environ.get("COMPILE_MAX_TIME_FOR_TRUSTED", 30))
+OUTPUT_LIMIT = int(os.environ.get("OUTPUT_LIMIT", 256))
+DEBUG = os.environ.get("DEBUG", 0)

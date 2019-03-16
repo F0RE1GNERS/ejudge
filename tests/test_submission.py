@@ -8,162 +8,118 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from config.config import Verdict
 from core.submission import Submission
-from sandbox.sandbox import Sandbox
 from tests.test_base import TestBase
 
 
 class APlusBTest(TestBase):
 
-    def setUp(self):
-        logging.basicConfig(level=logging.INFO)
-        self.workspace = '/tmp/submission'
-        super(APlusBTest, self).setUp()
+  def setUp(self):
+    logging.basicConfig(level=logging.INFO)
+    self.workspace = '/tmp/submission'
+    super(APlusBTest, self).setUp()
 
-        self.running_config = {
-            'stdin': self.make_input('1\n2\n'),
-            'stdout': self.output_path(),
-            'stderr': self.output_path(),
-            'max_time': 3,
-            'max_memory': 128,
-        }
+    self.running_config = {
+      'stdin_file': self.make_input('1\n2\n'),
+      'stdout_file': self.output_path(),
+      'stderr_file': self.output_path(),
+      'max_time': 3,
+      'max_memory': 128,
+      'working_directory': self.workspace
+    }
 
-        lang = self._testMethodName[5:]
-        code = self.read_content('./submission/aplusb.%s' % lang)
-        fingerprint = self.rand_str()
+    lang = self._testMethodName[5:]
+    code = self.read_content('./submission/aplusb.%s' % lang)
+    self.submission = Submission(lang)
+    self.submission.compile(code, 5)
+    self.result = self.submission.run(**self.running_config)
+    if self.result.verdict != Verdict.ACCEPTED:
+      print(self.output_content(self.running_config['stderr_file']))
+    self.assertEqual(self.result.verdict, Verdict.ACCEPTED)
+    self.assertEqual('3', self.output_content(self.running_config['stdout_file']).strip())
 
-        self.submission = Submission(fingerprint, code, lang)
-        self.result = self.submission.run(**self.running_config)
-        if self.result.verdict != Verdict.ACCEPTED:
-            print(self.output_content(self.running_config['stderr']))
-        self.assertEqual(self.result.verdict, Verdict.ACCEPTED)
-        self.assertEqual('3', self.output_content(self.running_config['stdout']).strip())
+  def tearDown(self):
+    self.submission.clean()
 
-    def tearDown(self):
-        self.submission.clean()
+  def test_c(self):
+    pass
 
-    def test_c(self):
-        pass
+  def test_cpp(self):
+    pass
 
-    def test_cpp(self):
-        pass
+  def test_cc14(self):
+    pass
 
-    def test_cc14(self):
-        pass
+  def test_cc17(self):
+    pass
 
-    def test_cc17(self):
-        pass
+  def test_java(self):
+    pass
 
-    def test_cs(self):
-        pass
+  def test_pas(self):
+    pass
 
-    def test_hs(self):
-        pass
+  def test_py2(self):
+    pass
 
-    def test_java(self):
-        pass
+  def test_python(self):
+    pass
 
-    def test_js(self):
-        pass
+  def test_pypy(self):
+    pass
 
-    def test_pas(self):
-        pass
+  def test_pypy3(self):
+    pass
 
-    def test_php(self):
-        pass
-
-    def test_py2(self):
-        pass
-
-    def test_python(self):
-        pass
-
-    def test_pypy(self):
-        pass
-
-    def test_pypy3(self):
-        pass
-
-    def test_perl(self):
-        pass
-
-    def test_ocaml(self):
-        pass
-
-    def test_rs(self):
-        pass
-
-    def test_scala(self):
-        pass
-
-    def test_text(self):
-        pass
+  def test_text(self):
+    pass
 
 
 class TrustedSubmissionTest(TestBase):
 
-    def setUp(self):
-        logging.basicConfig(level=logging.INFO)
-        self.workspace = '/tmp/trusted'
-        super(TrustedSubmissionTest, self).setUp()
+  def setUp(self):
+    logging.basicConfig(level=logging.INFO)
+    self.workspace = '/tmp/trusted'
+    super(TrustedSubmissionTest, self).setUp()
 
-    def test_java_unsafe(self):
-        with open("/tmp/unsafe.txt", "w") as f:
-            f.write('unsafe\n')
-        self.running_config = {
-            'stdin': '/dev/null',
-            'stdout': self.output_path(),
-            'stderr': self.output_path(),
-            'max_time': 3,
-            'max_memory': 128,
-            'trusted': True,
-        }
+  def test_cpp_library(self):
+    self.running_config = {
+      'stdin_file': '/dev/null',
+      'stdout_file': self.output_path(),
+      'stderr_file': self.output_path(),
+      'max_time': 3,
+      'max_memory': 128,
+      'working_directory': self.workspace
+    }
 
-        lang = 'java'
-        code = self.read_content('./submission/java_unsafe.java')
-        fingerprint = self.rand_str()
+    code = self.read_content('./submission/testlib-test.cpp')
 
-        self.submission = Submission(fingerprint, code, lang)
-        self.result = self.submission.run(**self.running_config)
-        self.assertEqual(self.result.verdict, Verdict.ACCEPTED)
-        self.assertEqual('unsafe', self.output_content(self.running_config['stdout']).strip())
+    self.submission = Submission('cpp')
+    self.submission.compile(code, 10)
+    self.result = self.submission.run(**self.running_config)
+    self.assertEqual(self.result.verdict, Verdict.ACCEPTED)
+    print(self.output_content(self.running_config['stdout_file']))
+    self.submission.clean()
 
-    def test_cpp_library(self):
-        self.running_config = {
-            'stdin': '/dev/null',
-            'stdout': self.output_path(),
-            'stderr': self.output_path(),
-            'max_time': 3,
-            'max_memory': 128,
-        }
+  def test_python_library(self):
+    self.running_config = {
+      'stdin_file': '/dev/null',
+      'stdout_file': self.output_path(),
+      'stderr_file': self.output_path(),
+      'max_time': 3,
+      'max_memory': 512,
+      'working_directory': self.workspace
+    }
 
-        code = self.read_content('./submission/testlib-test.cpp')
-        fingerprint = self.rand_str()
+    code = self.read_content('./submission/numpy-test.py')
 
-        self.submission = Submission(fingerprint, code, 'cpp')
-        self.result = self.submission.run(**self.running_config)
-        self.assertEqual(self.result.verdict, Verdict.ACCEPTED)
-        print(self.output_content(self.running_config['stdout']))
-        self.submission.clean()
-
-    def test_python_library(self):
-        self.running_config = {
-            'stdin': '/dev/null',
-            'stdout': self.output_path(),
-            'stderr': self.output_path(),
-            'max_time': 3,
-            'max_memory': 512,
-        }
-
-        code = self.read_content('./submission/numpy-test.py')
-        fingerprint = self.rand_str()
-
-        self.submission = Submission(fingerprint, code, 'scipy')
-        self.result = self.submission.run(**self.running_config)
-        logging.info(self.output_content(self.running_config['stderr']))
-        logging.info(self.output_content(self.running_config['stdout']))
-        self.assertEqual(self.result.verdict, Verdict.ACCEPTED)
-        self.submission.clean()
+    self.submission = Submission('python')
+    self.submission.compile(code, 5)
+    self.result = self.submission.run(**self.running_config)
+    logging.info(self.output_content(self.running_config['stderr_file']))
+    logging.info(self.output_content(self.running_config['stdout_file']))
+    self.assertEqual(self.result.verdict, Verdict.ACCEPTED)
+    self.submission.clean()
 
 
 if __name__ == '__main__':
-    unittest.main()
+  unittest.main()

@@ -20,7 +20,7 @@ def ping():
 
 def check_auth(username, password):
   with open(TOKEN_FILE) as token_fs:
-    tokens = yaml.load(token_fs.read())
+    tokens = yaml.safe_load(token_fs.read())
   return username == tokens['username'] and password == tokens['password']
 
 

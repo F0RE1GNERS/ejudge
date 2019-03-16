@@ -1,17 +1,17 @@
 import glob
 import os
 import shutil
-import signal
 import stat
 import sys
 import traceback
-from os import path, makedirs, chown, remove
+from os import path, remove
 
-from config.config import COMPILER_GROUP_GID, COMPILER_USER_UID, RUN_GROUP_GID, RUN_USER_UID, NSJAIL_PATH, OUTPUT_LIMIT
-from config.config import LANGUAGE_CONFIG, SUB_BASE, USUAL_READ_SIZE, ENV, REAL_TIME_FACTOR
+from config.config import COMPILER_GROUP_GID, COMPILER_USER_UID, RUN_GROUP_GID, RUN_USER_UID, NSJAIL_PATH, OUTPUT_LIMIT, \
+  DEBUG
+from config.config import LANGUAGE_CONFIG, SUB_BASE, USUAL_READ_SIZE, ENV
 from config.config import Verdict
 from core.exception import *
-from core.util import format, random_string, make_temp_dir
+from core.util import random_string, make_temp_dir
 
 
 class Result:
@@ -29,12 +29,11 @@ class Result:
 
 class Submission(object):
 
-  def __init__(self, fingerprint, lang, exe_file=None):
-    self.workspace = path.join(SUB_BASE, fingerprint)
+  def __init__(self, lang, exe_file=None):
     self.lang = lang
     # Using [] instead of .get() to throw KeyError in case of bad configuration
     self.language_config = LANGUAGE_CONFIG[lang]
-    if self.exe_file is not None:
+    if exe_file is not None:
       self.exe_file = exe_file
     else:
       self.exe_file = path.join(SUB_BASE, random_string() + "." + self.language_config["exe_ext"])
@@ -45,27 +44,31 @@ class Submission(object):
 
     :param force: to clean whether it is permanent or not
     """
-    remove(self.exe_file)
+    if path.exists(self.exe_file):
+      remove(self.exe_file)
 
-  def format_compile_command(self, command, exe_file):
+  def format_compile_command(self, command, exe_file, working_directory):
     command = command.format(code_file=self.language_config["code_file"],
                              exe_file=exe_file)
     args_list = []
     for token in command.split():
       if "*" in token:
-        args_list.extend(glob.glob(token))
+        for file in glob.iglob(path.join(working_directory, token)):
+          args_list.append(path.relpath(file, working_directory))
       else:
         args_list.append(token)
     return args_list
 
   def compile(self, code, max_time):
-    error_path = path.join(self.workspace, "compiler_output_%s" % random_string())
-    tmp_compile_out = "compile.out"
     compile_dir = make_temp_dir()
+    tmp_compile_out = "compile.out"
+    error_path = path.join(compile_dir, "compiler.err")
     with open(path.join(compile_dir, self.language_config["code_file"]), "w") as fs:
       fs.write(code)
     for command in self.language_config["compile"]:
-      args_list = self.format_compile_command(command, tmp_compile_out)
+      args_list = self.format_compile_command(command, tmp_compile_out, compile_dir)
+      if not os.path.exists(args_list[0]):
+        raise CompileError("Compiler not found")
       result = self.run(max_time=max_time, max_memory=1024,
                         stdin_file="/dev/null", stdout_file=error_path, stderr_file=error_path,
                         working_directory=compile_dir, trusted=True,
@@ -82,6 +85,7 @@ class Submission(object):
             error_message = 'Something is wrong, but, em, nothing is reported'
         raise CompileError(error_message)
     shutil.copyfile(path.join(compile_dir, tmp_compile_out), self.exe_file)
+    os.chmod(self.exe_file, stat.S_IEXEC | stat.S_IREAD | stat.S_IWUSR | stat.S_IWGRP)
     shutil.rmtree(compile_dir)
 
   def get_message_from_file(self, result_file, read_size=USUAL_READ_SIZE, cleanup=False):
@@ -109,44 +113,48 @@ class Submission(object):
     real_time_limit = max_time * 2
     uid = COMPILER_USER_UID if trusted else RUN_USER_UID
     gid = COMPILER_GROUP_GID if trusted else RUN_GROUP_GID
+    extra_file_bindings = []
+
     if exe_file is None:
       exe_file = path.basename(self.exe_file)
-      args = self.format_compile_command(self.language_config["execute"], exe_file)
+      extra_file_bindings.append("-R")
+      extra_file_bindings.append(self.exe_file + ":/app/" + exe_file)
+      args = self.format_compile_command(self.language_config["execute"], exe_file, working_directory)
       exe_args = args + extra_arguments
     else:
+      # exe file is provided, we don't care about mounting any more.
       exe_args = [exe_file] + extra_arguments
-    shutil.copyfile(exe_file, working_directory)
-    extra_file_bindings = []
-    for k, v, mode in extra_files.items():
+
+    for k, v, mode in extra_files:
       extra_file_bindings.append("-" + mode)
       extra_file_bindings.append(k + ":/app/" + v)
     nsjail_args = [
-      NSJAIL_PATH, "-Mo", "--chroot", root_dir, "--user", str(uid), "--group", str(gid), "--log",
-      path.join(info_dir, "log"), "--usage", path.join(info_dir, "usage"),
-      "-R", "/bin", "-R", "/lib", "-R", "/lib64", "-R", "/usr", "-R", "/sbin", "-R", "/dev",
-      "-R", "/etc", "-B", working_directory + ":/app"] + extra_file_bindings + [
-      "-D", "/app",
-      "--cgroup_pids_max", "64", "--cgroup_cpu_ms_per_sec", "1000",
-      "--cgroup_mem_max", str(int(max_memory * 1024 * 1024)),
-      "--time_limit", str(int(real_time_limit + 1)), "--rlimit_cpu", str(int((max_time + 1))),
-      "--rlimit_as", "inf", "--rlimit_stack", str(int(max_memory)),
-      "--rlimit_stack", str(max(int(max_memory), 256)), "--rlimit_fsize", str(int(OUTPUT_LIMIT)),
-    ]
+                    NSJAIL_PATH, "-Mo", "--chroot", root_dir, "--user", str(uid), "--group", str(gid), "--log",
+                    path.join(info_dir, "log"), "--usage", path.join(info_dir, "usage"),
+                    "-R", "/bin", "-R", "/lib", "-R", "/lib64", "-R", "/usr", "-R", "/sbin", "-R", "/dev",
+                    "-R", "/etc", "-B", working_directory + ":/app"] + extra_file_bindings + [
+                    "-D", "/app",
+                    "--cgroup_pids_max", "64", "--cgroup_cpu_ms_per_sec", "1000",
+                    "--cgroup_mem_max", str(int(max_memory * 1024 * 1024)),
+                    "--time_limit", str(int(real_time_limit + 1)), "--rlimit_cpu", str(int((max_time + 1))),
+                    "--rlimit_as", "inf", "--rlimit_stack", str(int(max_memory)),
+                    "--rlimit_stack", str(max(int(max_memory), 256)), "--rlimit_fsize", str(int(OUTPUT_LIMIT)),
+                  ]
     for k, v in ENV.items():
       nsjail_args.append("-E")
       nsjail_args.append("%s=%s" % (k, v))
     nsjail_args.append("--")
-    nsjail_args.append(exe_args)
+    nsjail_args.extend(exe_args)
 
     pid = os.fork()
     if pid == 0:
       try:
         stdin_fd = os.open(stdin_file, os.O_RDONLY, stat.S_IRUSR | stat.S_IRGRP)
-        os.dup2(stdin_fd, sys.stdin.fileno())
-        stdout_fd = os.open(stdout_file, os.O_WRONLY, stat.S_IRUSR | stat.S_IRGRP)
-        os.dup2(stdout_fd, sys.stdout.fileno())
-        stderr_fd = os.open(stderr_file, os.O_WRONLY, stat.S_IRUSR | stat.S_IRGRP)
-        os.dup2(stderr_fd, sys.stderr.fileno())
+        os.dup2(stdin_fd, 0)
+        stdout_fd = os.open(stdout_file, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, stat.S_IRUSR | stat.S_IWUSR)
+        os.dup2(stdout_fd, 1)
+        stderr_fd = os.open(stderr_file, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, stat.S_IRUSR | stat.S_IWUSR)
+        os.dup2(stderr_fd, 2)
         os.execve(NSJAIL_PATH, nsjail_args, dict())
       except:
         with open(error_path, "w") as p:
@@ -163,12 +171,12 @@ class Submission(object):
           usage = {}
           for line in usage_file:
             tag, num = line.strip().split()
-            usage[tag] = num
+            usage[tag] = int(num)
 
         result = Result(usage["user"] / 1000, usage["memory"] / 1024, usage["exit"], usage["signal"])
         if result.exit_code != 0:
           result.verdict = Verdict.RUNTIME_ERROR
-        elif result.memory * 1048576 > max_memory > 0:
+        elif result.memory > max_memory > 0:
           result.verdict = Verdict.MEMORY_LIMIT_EXCEEDED
         elif result.time > max_time > 0:
           result.verdict = Verdict.TIME_LIMIT_EXCEEDED
@@ -180,5 +188,6 @@ class Submission(object):
       except:
         raise RuntimeError(traceback.format_exc())
       finally:
-        shutil.rmtree(info_dir)
-        shutil.rmtree(root_dir)
+        if not DEBUG:
+          shutil.rmtree(info_dir)
+          shutil.rmtree(root_dir)

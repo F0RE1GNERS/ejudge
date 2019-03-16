@@ -2,4 +2,5 @@
 seccomp.c*
 venv
 .idea
+run
 

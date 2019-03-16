@@ -68,7 +68,7 @@ def judge_handler(sub_fingerprint, sub_code, sub_lang,
       sum_verdict_value = Verdict.ACCEPTED.value
       time_verdict = -1
 
-      submission = Submission(sub_fingerprint, sub_lang)
+      submission = Submission(sub_lang)
       submission.compile(sub_code, max(max_time * 5, 15))
 
       if not checker_fingerprint:

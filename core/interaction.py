@@ -1,12 +1,10 @@
 import os
-import pickle
 import shutil
-from os import pipe, fork, close, fdopen, _exit, path
+from os import pipe, path
 from threading import Thread
 
 from config.config import Verdict
 from core.runner import CaseRunner
-from core.submission import Submission
 from core.util import random_string
 
 

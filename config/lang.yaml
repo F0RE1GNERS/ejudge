@@ -18,7 +18,7 @@ cc14:
   execute: ./{exe_file}
 cc17:
   compile:
-    - usr/bin/g++-7 -O2 -std=c++17 -o {exe_file} {code_file} -DONLINE_JUDGE -lm -fmax-errors=3
+    - /usr/bin/g++ -O2 -std=c++17 -o {exe_file} {code_file} -DONLINE_JUDGE -lm -fmax-errors=3
   code_file: foo.cc
   exe_ext: bin17
   execute: ./{exe_file}
@@ -30,11 +30,11 @@ pas:
   execute: ./{exe_file}
 java:
   compile:
-    - /usr/bin/javac -encoding utf8 -d ./build {code_file}
-    - /usr/bin/jar cvf {exe_file} ./build/*
+    - /usr/bin/javac -encoding utf8 -d . {code_file}
+    - /usr/bin/jar cvf {exe_file} *.class
   code_file: Main.java
   exe_ext: jar
-  execute: /usr/bin/java {exe_file} -cp Main
+  execute: /usr/bin/java -cp {exe_file} Main
 py2:
   compile:
     - /bin/cp {code_file} {exe_file}
@@ -58,7 +58,7 @@ pypy3:
     - /bin/cp {code_file} {exe_file}
   code_file: foo.py
   exe_ext: pypy3
-  execute: /usr/bin/pypy3 {exe_file}
+  execute: /usr/local/bin/pypy3 {exe_file}
 text:
   compile:
     - /bin/cp {code_file} {exe_file}
