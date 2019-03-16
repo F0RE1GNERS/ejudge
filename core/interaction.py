@@ -29,10 +29,6 @@ class InteractiveRunner(CaseRunner):
 
   def initiate_case(self, case):
     super().initiate_case(case)
-    self.case_input_name = "copy_" + random_string()
-    self.case_output_name = "copy_" + random_string()
-    shutil.copyfile(self.case.input_file, path.join(self.trusted_workspace, self.case_input_name))
-    shutil.copyfile(self.case.output_file, path.join(self.trusted_workspace, self.case_output_name))
 
   def run(self, case):
     self.initiate_case(case)
@@ -51,14 +47,14 @@ class InteractiveRunner(CaseRunner):
 
     def run_submission_helper():
       results[0] = self.submission.run(max_time=self.max_time, max_memory=self.max_memory,
-                          stdin_file="/dev/fd/%d" % sub_rd, stdout_file="/dev/fd/%d" % sub_wr,
-                          stderr_file=running_stderr, working_directory=self.workspace)
+                                       stdin_fd=sub_rd, stdout_fd=sub_wr,
+                                       stderr_file=running_stderr, working_directory=self.workspace)
 
     def run_interaction_helper():
       results[1] = self.interactor.run(
-        stdin_file="/dev/fd/%d" % sub_rd, stdout_file="/dev/fd/%d" % sub_wr, stderr_file="/dev/null",
+        stdin_fd=int_rd, stdout_fd=int_wr, stderr_file="/dev/null",
         max_time=self.max_time, max_memory=self.max_memory, working_directory=self.trusted_workspace,
-        extra_files=[(self.case.input_file, "in", "R"), (running_output, "out", "R"),
+        extra_files=[(self.case.input_file, "in", "R"), (running_output, "out", "B"),
                      (self.case.output_file, "ans", "R"), (interactor_result_file, "result", "B")],
         extra_arguments=["in", "out", "ans", "result"]
       )

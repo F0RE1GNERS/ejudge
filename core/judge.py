@@ -36,25 +36,22 @@
 """
 from os import path, listdir
 
+from config.config import Verdict, SPJ_BASE, LANGUAGE_CONFIG
 from core.submission import Submission
-from core.exception import CompileError
-from config.config import LIB_BASE, Verdict, DEVNULL, SPJ_BASE, LANGUAGE_CONFIG
 
 
 class SpecialJudge(Submission):
-  class Result:
 
-    def __init__(self, verdict, message):
-      self.verdict = verdict
-      self.message = message
+  def __init__(self, lang, fingerprint=None, exe_file=None):
+    if exe_file is not None:
+      super().__init__(lang, exe_file=exe_file)
+    elif fingerprint is not None:
+      super().__init__(lang, exe_file=path.join(SPJ_BASE, fingerprint + "." + LANGUAGE_CONFIG[lang]["exe_ext"]))
+    else:
+      raise AssertionError
 
-    def __repr__(self):
-      return "SpecialJudge.Result object: " + str(self.__dict__)
-
-  def __init__(self, fingerprint, lang, exe_file=None):
-    if exe_file is None:
-      exe_file = path.join(SPJ_BASE, fingerprint + "." + LANGUAGE_CONFIG[lang]["exe_ext"])
-    super().__init__(fingerprint, lang, exe_file)
+  def clean(self):
+    pass   # do nothing
 
   @classmethod
   def fromExistingFingerprint(cls, fingerprint):
@@ -71,7 +68,7 @@ class SpecialJudge(Submission):
         lang = candidate_lang
     if not lang:
       raise FileNotFoundError("SPJ language not recognized")
-    return cls(fingerprint, lang, exe_file)
+    return cls(lang, exe_file=exe_file)
 
   def get_verdict_from_test_result(self, checker_result):
     """

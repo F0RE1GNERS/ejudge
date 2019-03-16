@@ -1,20 +1,16 @@
-import base64
-import time
 import traceback
 from io import StringIO
-from os import path
 
 from flask import Flask
 from werkzeug.contrib.cache import MemcachedCache
 
-from config.config import Verdict, TRACEBACK_LIMIT, OUTPUT_LIMIT
+from config.config import Verdict, TRACEBACK_LIMIT
 from core.case import Case
 from core.exception import CompileError
-from core.judge import Checker, Interactor, Generator, Validator
-from core.runner import CaseRunner
 from core.interaction import InteractiveRunner
+from core.judge import SpecialJudge
+from core.runner import CaseRunner
 from core.submission import Submission
-from core.util import random_string
 
 flask_app = Flask(__name__)
 
@@ -73,10 +69,10 @@ def judge_handler(sub_fingerprint, sub_code, sub_lang,
 
       if not checker_fingerprint:
         checker_fingerprint = 'defaultspj'
-      checker = Checker.fromExistingFingerprint(checker_fingerprint)
+      checker = SpecialJudge.fromExistingFingerprint(checker_fingerprint)
       report = StringIO()
       if interactor_fingerprint:
-        interactor = Interactor.fromExistingFingerprint(interactor_fingerprint)
+        interactor = SpecialJudge.fromExistingFingerprint(interactor_fingerprint)
         case_runner = InteractiveRunner(submission, interactor, checker, max_time, max_memory, report_file=report)
       else:
         case_runner = CaseRunner(submission, checker, max_time, max_memory, report_file=report)

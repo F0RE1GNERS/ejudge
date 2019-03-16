@@ -101,7 +101,9 @@ class Submission(object):
     except:
       return ''
 
-  def run(self, max_time, max_memory, stdin_file: str, stdout_file: str, stderr_file: str, working_directory: str,
+  def run(self, max_time, max_memory, working_directory: str,
+          stdin_file: str=None, stdout_file: str=None, stderr_file: str=None,
+          stdin_fd: int=None, stdout_fd: int=None, stderr_fd: int=None,
           exe_file: str=None, trusted=False, extra_arguments: list=None, extra_files: list=None):
     if extra_files is None:
       extra_files = list()
@@ -149,11 +151,14 @@ class Submission(object):
     pid = os.fork()
     if pid == 0:
       try:
-        stdin_fd = os.open(stdin_file, os.O_RDONLY, stat.S_IRUSR | stat.S_IRGRP)
+        if stdin_fd is None:
+          stdin_fd = os.open(stdin_file, os.O_RDONLY, stat.S_IRUSR | stat.S_IRGRP)
+        if stdout_fd is None:
+          stdout_fd = os.open(stdout_file, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, stat.S_IRUSR | stat.S_IWUSR)
+        if stderr_fd is None:
+          stderr_fd = os.open(stderr_file, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, stat.S_IRUSR | stat.S_IWUSR)
         os.dup2(stdin_fd, 0)
-        stdout_fd = os.open(stdout_file, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, stat.S_IRUSR | stat.S_IWUSR)
         os.dup2(stdout_fd, 1)
-        stderr_fd = os.open(stderr_file, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, stat.S_IRUSR | stat.S_IWUSR)
         os.dup2(stderr_fd, 2)
         os.execve(NSJAIL_PATH, nsjail_args, dict())
       except:
@@ -162,6 +167,12 @@ class Submission(object):
       sys.exit(0)
     else:
       try:
+        if stdin_fd is not None:
+          os.close(stdin_fd)
+        if stdout_fd is not None:
+          os.close(stdout_fd)
+        if stderr_fd is not None:
+          os.close(stderr_fd)
         os.waitpid(pid, 0)
         if os.path.exists(error_path):
           with open(error_path) as p:
@@ -176,7 +187,7 @@ class Submission(object):
         result = Result(usage["user"] / 1000, usage["memory"] / 1024, usage["exit"], usage["signal"])
         if result.exit_code != 0:
           result.verdict = Verdict.RUNTIME_ERROR
-        elif result.memory > max_memory > 0:
+        if result.memory > max_memory > 0:
           result.verdict = Verdict.MEMORY_LIMIT_EXCEEDED
         elif result.time > max_time > 0:
           result.verdict = Verdict.TIME_LIMIT_EXCEEDED
@@ -190,4 +201,4 @@ class Submission(object):
       finally:
         if not DEBUG:
           shutil.rmtree(info_dir)
-          shutil.rmtree(root_dir)
+        shutil.rmtree(root_dir)

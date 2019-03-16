@@ -95,11 +95,8 @@ class CaseRunner(object):
     )
     result["message"] = self.checker.get_message_from_file(result_file, cleanup=True)
     result["verdict"] = self.checker.get_verdict_from_test_result(checker_result)
-    result['verdict'] = checker_result.verdict
-    result['message'] = checker_result.message
-    if checker_result.verdict == Verdict.POINT:
+    if result["verdict"] == Verdict.POINT:
       try:
-        print(result['message'])
         result['point'] = float(result['message'].lstrip().split(maxsplit=1)[0])
       except:
         result['point'] = 0.0

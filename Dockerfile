@@ -19,6 +19,7 @@ ENV LANG=en_US.UTF-8 LANGUAGE=en_US:en LC_ALL=en_US.UTF-8
 RUN git submodule init && cd nsjail && make && cd ..
 RUN useradd -r compiler \
     && wget https://raw.githubusercontent.com/MikeMirzayanov/testlib/master/testlib.h -O /usr/local/include/testlib.h \
+    && g++ -o run/spj/defaultspj.bin11 lib/defaultspj.cpp -O2 -std=c++11 -lm \
     && pip3 install -r requirements.txt \
     && chmod +x run.sh
 EXPOSE 5000

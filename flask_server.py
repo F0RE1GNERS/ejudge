@@ -76,7 +76,7 @@ def upload_case(fid, io):
 @with_traceback_on_err
 def upload_spj():
   data = request.get_json()
-  program = SpecialJudge(data['fingerprint'], data['lang'])
+  program = SpecialJudge(data['lang'], data['fingerprint'])
   program.compile(data['code'], 30)
   return response_ok()
 
