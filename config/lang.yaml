@@ -58,7 +58,7 @@ pypy3:
     - /bin/cp {code_file} {exe_file}
   code_file: foo.py
   exe_ext: pypy3
-  execute: /usr/local/bin/pypy3 {exe_file}
+  execute: /snap/bin/pypy3 {exe_file}
 text:
   compile:
     - /bin/cp {code_file} {exe_file}
