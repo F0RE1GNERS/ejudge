@@ -5,19 +5,16 @@ services:
     restart: always
 
   ejudge-app:
-    build: .
-    # image: registry.cn-hangzhou.aliyuncs.com/ultmaster/ejudge:v3
+    image: registry.cn-hangzhou.aliyuncs.com/ultmaster/ejudge:v3
     privileged: true
     environment:
       TRACEBACK_LIMIT: 5
       USUAL_READ_SIZE: 512
-      REAL_TIME_FACTOR: 2
       OUTPUT_LIMIT: 256
       USERNAME: ejudge
       PASSWORD: naive
-      DEBUG: 1
     volumes:
-      - /hd1/data:/ejudge/run/data
+      - /hd1/data:/ejudge/run/data:ro
       - /hd1/ejudge/spj:/ejudge/run/spj
       - /hd1/ejudge/log:/ejudge/run/log
     ports:
