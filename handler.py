@@ -1,3 +1,4 @@
+import os
 import traceback
 from io import StringIO
 
@@ -12,7 +13,7 @@ from core.runner import CaseRunner
 from core.submission import Submission
 
 
-cache = MemcachedCache(['127.0.0.1:11211'])
+cache = MemcachedCache([os.environ.get("MEMCACHED", "localhost") + ':11211'])
 
 
 def reject_with_traceback():

@@ -1,13 +1,16 @@
 version: "3"
 services:
   ejudge-memcached:
+    container_name: ejudge-memcached
     image: memcached:1.5-alpine
     restart: always
 
   ejudge-app:
     image: registry.cn-hangzhou.aliyuncs.com/ultmaster/ejudge:v3
+    container_name: ejudge-app
     privileged: true
     environment:
+      MEMCACHED: ejudge-memcached
       TRACEBACK_LIMIT: 5
       USUAL_READ_SIZE: 512
       OUTPUT_LIMIT: 256
