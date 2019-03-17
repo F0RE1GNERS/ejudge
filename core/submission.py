@@ -134,8 +134,7 @@ class Submission(object):
                     NSJAIL_PATH, "-Mo", "--chroot", root_dir, "--user", str(uid), "--group", str(gid), "--log",
                     path.join(info_dir, "log"), "--usage", path.join(info_dir, "usage"),
                     "-R", "/bin", "-R", "/lib", "-R", "/lib64", "-R", "/usr", "-R", "/sbin", "-R", "/dev",
-                    "-R", "/etc", "-R", "/snap",
-                    "-B" if trusted else "-R", working_directory + ":/app"] + extra_file_bindings + [
+                    "-R", "/etc", "-B" if trusted else "-R", working_directory + ":/app"] + extra_file_bindings + [
                     "-D", "/app",
                     "--cgroup_pids_max", "64", "--cgroup_cpu_ms_per_sec", "1000",
                     "--cgroup_mem_max", str(int(max_memory * 1024 * 1024)),

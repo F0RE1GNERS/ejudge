@@ -3,7 +3,7 @@ from io import StringIO
 
 from werkzeug.contrib.cache import MemcachedCache
 
-from config.config import Verdict, TRACEBACK_LIMIT
+from config.config import Verdict, TRACEBACK_LIMIT, DEBUG
 from core.case import Case
 from core.exception import CompileError
 from core.interaction import InteractiveRunner
@@ -117,13 +117,14 @@ def judge_handler(sub_fingerprint, sub_code, sub_lang,
   finally:
     cache.set(sub_fingerprint, response, timeout=3600)
 
-    try:
-      submission.clean()
-    except NameError:
-      pass
-    try:
-      case_runner.clean()
-    except NameError:
-      pass
+    if not DEBUG:
+      try:
+        submission.clean()
+      except NameError:
+        pass
+      try:
+        case_runner.clean()
+      except NameError:
+        pass
 
   return response
