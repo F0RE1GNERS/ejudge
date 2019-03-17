@@ -2,11 +2,11 @@ FROM ubuntu:18.10
 MAINTAINER ultmaster scottyugochang@gmail.com
 ENV DEBIAN_FRONTEND noninteractive
 
-RUN apt-get update \
+RUN add-apt-repository ppa:pypy/ppa && apt-get update \
     && apt-get -y install software-properties-common python python-dev python-pip \
                           locales python3-software-properties python3 python3-dev python3-pip \
-                          gcc g++ git libtool python-pip cmake openjdk-8-jdk fp-compiler pypy libboost-all-dev wget \
-    && snap install pypy3 \
+                          gcc g++ git libtool python-pip cmake openjdk-8-jdk fp-compiler pypy pypy3 \
+                          libboost-all-dev wget \
     && locale-gen en_US.UTF-8
 ADD . /ejudge
 WORKDIR /ejudge
