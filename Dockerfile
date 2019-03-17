@@ -15,6 +15,7 @@ RUN mkdir -p run/sub run/log run/tmp
 ENV LANG=en_US.UTF-8 LANGUAGE=en_US:en LC_ALL=en_US.UTF-8
 RUN useradd -r compiler \
     && wget https://raw.githubusercontent.com/MikeMirzayanov/testlib/master/testlib.h -O /usr/local/include/testlib.h \
+    && g++ -o lib/defaultspj.bin11 lib/defaultspj.cpp -O2 -std=c++11 -lm \
     && pip3 install -r requirements.txt \
     && chmod +x run.sh
 RUN git submodule update --init --recursive && cd nsjail && make && cd ..

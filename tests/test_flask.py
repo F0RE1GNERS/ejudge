@@ -78,6 +78,11 @@ class FlaskTest(TestBase):
     self.assertEqual('received', result['status'])
     self.assertIn(fingerprint + ".bin11", os.listdir(SPJ_BASE))
 
+  def test_list_spj(self):
+    result = requests.get(self.url_base + '/list/spj', auth=self.token).json()
+    self.assertEqual('received', result['status'])
+    self.assertGreater(len(result["spj"]), 0)
+
   def judge_aplusb(self, code, lang, hold=True):
     checker_fingerprint = self.rand_str(True)
     case_fingerprints = [self.rand_str(True) for _ in range(31)]

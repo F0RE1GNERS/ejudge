@@ -22,8 +22,12 @@ with open(path.join(_CONFIG_BASE, 'lang.yaml')) as language_config:
 RUN_USER_UID = getpwnam("nobody").pw_uid
 RUN_GROUP_GID = getgrnam("nogroup").gr_gid
 
-COMPILER_USER_UID = getpwnam("compiler").pw_uid
-COMPILER_GROUP_GID = getgrnam("compiler").gr_gid
+try:
+  COMPILER_USER_UID = getpwnam("compiler").pw_uid
+  COMPILER_GROUP_GID = getgrnam("compiler").gr_gid
+except:
+  COMPILER_USER_UID = 1000
+  COMPILER_GROUP_GID = 1000
 
 ENV = {
   "PATH": getenv("PATH", ""),

@@ -36,7 +36,7 @@
 """
 from os import path, listdir
 
-from config.config import Verdict, SPJ_BASE, LANGUAGE_CONFIG
+from config.config import Verdict, SPJ_BASE, LANGUAGE_CONFIG, LIB_BASE
 from core.submission import Submission
 
 
@@ -56,18 +56,22 @@ class SpecialJudge(Submission):
   @classmethod
   def fromExistingFingerprint(cls, fingerprint):
     exe_file, lang = None, None
-    for file in listdir(SPJ_BASE):
-      if file.startswith(fingerprint + "."):
-        exe_file = path.join(SPJ_BASE, file)
+    for directory in [SPJ_BASE, LIB_BASE]:
+      # search lib base for more
+      for file in listdir(directory):
+        if file.startswith(fingerprint + "."):
+          exe_file = path.join(directory, file)
+          file_ext = exe_file.split(".")[-1]
+          for candidate_lang in LANGUAGE_CONFIG:
+            if LANGUAGE_CONFIG[candidate_lang]["exe_ext"] == file_ext:
+              lang = candidate_lang
+              break
+          if lang:
+            break
+      if exe_file and lang:
         break
-    if not exe_file:
+    if not exe_file or not lang:
       raise FileNotFoundError("SPJ fingerprint does not exist")
-    file_ext = exe_file.split(".")[-1]
-    for candidate_lang in LANGUAGE_CONFIG:
-      if LANGUAGE_CONFIG[candidate_lang]["exe_ext"] == file_ext:
-        lang = candidate_lang
-    if not lang:
-      raise FileNotFoundError("SPJ language not recognized")
     return cls(lang, exe_file=exe_file)
 
   def get_verdict_from_test_result(self, checker_result):

@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-
+import os
 import threading
 from functools import wraps
 
 import yaml
 from flask import request, Response, jsonify, Flask
 
-from config.config import TOKEN_FILE, Verdict
+from config.config import TOKEN_FILE, Verdict, SPJ_BASE
 from core.case import Case
 from core.judge import SpecialJudge
 from handler import judge_handler
@@ -81,6 +81,16 @@ def upload_spj():
   program = SpecialJudge(data['lang'], data['fingerprint'])
   program.compile(data['code'], 30)
   return response_ok()
+
+
+@flask_app.route('/list/spj', methods=['GET'])
+@auth_required
+@with_traceback_on_err
+def list_spj():
+  return jsonify({
+    "status": "received",
+    "spj": list(os.listdir(SPJ_BASE))
+  })
 
 
 @flask_app.route('/judge', methods=['POST'])
