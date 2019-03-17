@@ -23,7 +23,7 @@ RUN_USER_UID = getpwnam("nobody").pw_uid
 RUN_GROUP_GID = getgrnam("nogroup").gr_gid
 
 COMPILER_USER_UID = getpwnam("compiler").pw_uid
-COMPILER_GROUP_GID = getgrnam("compiler").pw_uid
+COMPILER_GROUP_GID = getgrnam("compiler").gr_gid
 
 ENV = {
   "PATH": getenv("PATH", ""),
