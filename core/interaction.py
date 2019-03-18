@@ -78,7 +78,7 @@ class InteractiveRunner(CaseRunner):
       checker_message = result.get('message', '')
     elif interactor_result.verdict != Verdict.ACCEPTED:
       result = {"verdict": interactor_result.verdict, "time": running_result.time, "memory": running_result.memory}
-      checker_message = self.get_message_from_file(interactor_result_file)
+      checker_message = ""
     else:
       result = self.do_check(running_output, running_result)
       checker_message = result.pop('message', '')
