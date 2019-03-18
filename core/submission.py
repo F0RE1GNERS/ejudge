@@ -2,6 +2,7 @@ import glob
 import os
 import shutil
 import stat
+import subprocess
 import sys
 import traceback
 from os import path, remove
@@ -100,6 +101,17 @@ class Submission(object):
       return message
     except:
       return ''
+
+  def run_unsafe_for_binary(self, max_time, working_directory: str, extra_arguments: list = None):
+    if extra_arguments is None:
+      extra_arguments = list()
+    try:
+      p = subprocess.run([self.exe_file] + extra_arguments,
+                         stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                         cwd=working_directory, timeout=max_time + 1)
+      return Result(0, 0, p.returncode, 0, Verdict.RUNTIME_ERROR if p.returncode else Verdict.ACCEPTED)
+    except subprocess.TimeoutExpired:
+      return Result(0, 0, (1 << 31) - 1, 0, Verdict.TIME_LIMIT_EXCEEDED)
 
   def run(self, max_time, max_memory, working_directory: str,
           stdin_file: str=None, stdout_file: str=None, stderr_file: str=None,

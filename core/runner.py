@@ -12,7 +12,7 @@ import shutil
 from os import path, chown, makedirs
 import base64
 
-from config.config import Verdict, USUAL_READ_SIZE, TMP_BASE, COMPILER_USER_UID, COMPILER_GROUP_GID
+from config.config import Verdict, USUAL_READ_SIZE, TMP_BASE, COMPILER_USER_UID, COMPILER_GROUP_GID, LIB_BASE
 from core.util import get_signal_name, random_string, make_temp_dir
 
 
@@ -87,13 +87,22 @@ class CaseRunner(object):
   def do_check(self, running_output, running_result):
     result = dict()
     result_file = self.make_a_file_to_write()
-    checker_result = self.checker.run(
-      stdin_file="/dev/null", stdout_file="/dev/null", stderr_file="/dev/null",
-      max_time=self.max_time, max_memory=self.max_memory, working_directory=self.trusted_workspace,
-      extra_files=[(self.case.input_file, "in", "R"), (running_output, "out", "R"),
-                   (self.case.output_file, "ans", "R"), (result_file, "result", "B")],
-      extra_arguments=["in", "out", "ans", "result"]
-    )
+    if self.checker.exe_file.startswith(LIB_BASE):
+      # trusted checker in LIB_BASE
+      # not using sandbox to accelerate
+      checker_result = self.checker.run_unsafe_for_binary(
+        max_time = self.max_time,
+        working_directory=self.trusted_workspace,
+        extra_arguments=[self.case.input_file, running_output, self.case.output_file, result_file]
+      )
+    else:
+      checker_result = self.checker.run(
+        stdin_file="/dev/null", stdout_file="/dev/null", stderr_file="/dev/null",
+        max_time=self.max_time, max_memory=self.max_memory, working_directory=self.trusted_workspace,
+        extra_files=[(self.case.input_file, "in", "R"), (running_output, "out", "R"),
+                     (self.case.output_file, "ans", "R"), (result_file, "result", "B")],
+        extra_arguments=["in", "out", "ans", "result"]
+      )
     result["message"] = self.checker.get_message_from_file(result_file, cleanup=True)
     result["verdict"] = self.checker.get_verdict_from_test_result(checker_result)
     if result["verdict"] == Verdict.POINT:
