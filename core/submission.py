@@ -86,7 +86,7 @@ class Submission(object):
             error_message = 'Something is wrong, but, em, nothing is reported'
         raise CompileError(error_message)
     shutil.copyfile(path.join(compile_dir, tmp_compile_out), self.exe_file)
-    os.chmod(self.exe_file, stat.S_IEXEC | stat.S_IREAD | stat.S_IWUSR | stat.S_IWGRP)
+    os.chmod(self.exe_file, 0o0775)
     shutil.rmtree(compile_dir)
 
   def get_message_from_file(self, result_file, read_size=USUAL_READ_SIZE, cleanup=False):
@@ -185,10 +185,18 @@ class Submission(object):
           os.close(stdout_fd)
         if stderr_fd is not None:
           os.close(stderr_fd)
-        os.waitpid(pid, 0)
+        _, status = os.waitpid(pid, 0)
         if os.path.exists(error_path):
           with open(error_path) as p:
             raise RuntimeError(p.read())
+
+        if os.WEXITSTATUS(status) == 0xff:
+          log_path = path.join(info_dir, "log")
+          if path.exists(log_path):
+            with open(log_path) as p:
+              log_content = p.read()
+            if log_content.find("Couldn't launch the child process") != -1:
+              raise RuntimeError(log_content)
 
         with open(path.join(info_dir, "usage")) as usage_file:
           usage = {}
