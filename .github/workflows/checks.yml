@@ -3,6 +3,8 @@ name: Checks
 on:
   pull_request:
     branches: [ v3 ]
+  push:
+    branches: [ ultmaster/pr-checks ]
 
 jobs:
   docker:
