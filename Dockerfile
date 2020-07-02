@@ -1,7 +1,7 @@
 FROM ubuntu:20.04
 ENV DEBIAN_FRONTEND noninteractive
 
-RUN apt-get update && apt-get install -y software-properties-common \
+RUN apt-get update && apt-get install -y software-properties-common pkg-config \
     && add-apt-repository ppa:pypy/ppa && add-apt-repository universe \
     && apt-get update \
     && apt-get -y install python2 python2-dev wget flex bison \
