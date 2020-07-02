@@ -57,6 +57,7 @@ jobs:
       run: g++ -o lib/defaultspj.bin11 lib/defaultspj.cpp -O2 -std=c++11 -lm
     - name: Install python dependencies
       run: |
+        pip3 freeze
         pip3 install -r requirements.txt
     - name: Install nsjail
       run: |
@@ -66,13 +67,16 @@ jobs:
         cd ..
     - name: Submission tests
       run: |
+        cd tests
         sudo ./nsjail/setup.sh
-        sudo python3 -m unittest tests.test_submission
+        sudo python3 -m unittest test_submission
     - name: Runner tests
       run: |
+        cd tests
         sudo ./nsjail/setup.sh
-        sudo python3 -m unittest tests.test_runner
+        sudo python3 -m unittest test_runner
     - name: Flask tests
       run: |
         sudo bash run.sh &
-        sudo python3 -m unittest tests.test_flask
+        cd tests
+        sudo python3 -m unittest test_flask
