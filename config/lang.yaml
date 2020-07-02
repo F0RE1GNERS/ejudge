@@ -40,7 +40,7 @@ py2:
     - /bin/cp {code_file} {exe_file}
   code_file: foo.py
   exe_ext: py
-  execute: /usr/bin/python {exe_file}
+  execute: /usr/bin/python2 {exe_file}
 python:
   compile:
     - /bin/cp {code_file} {exe_file}

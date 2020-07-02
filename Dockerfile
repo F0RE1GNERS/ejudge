@@ -1,12 +1,11 @@
-FROM ubuntu:18.10
-MAINTAINER ultmaster scottyugochang@gmail.com
+FROM ubuntu:20.04
 ENV DEBIAN_FRONTEND noninteractive
 
 RUN apt-get update && apt-get install -y software-properties-common \
-    && add-apt-repository ppa:pypy/ppa && apt-get update \
-    && apt-get -y install python python-dev python-pip wget flex bison \
+    && add-apt-repository ppa:pypy/ppa universe && apt-get update \
+    && apt-get -y install python2 python2-dev python2-pip wget flex bison \
                           locales python3-software-properties python3 python3-dev python3-pip \
-                          gcc g++ git libtool python-pip cmake openjdk-8-jdk fp-compiler pypy pypy3 \
+                          gcc g++ git libtool cmake openjdk-8-jdk fp-compiler pypy pypy3 \
                           libboost-all-dev libprotobuf-dev protobuf-compiler libnl-3-dev libnl-route-3-dev \
     && locale-gen en_US.UTF-8
 ADD . /ejudge

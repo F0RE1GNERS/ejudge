@@ -18,6 +18,12 @@ jobs:
     runs-on: ubuntu-18.04
     steps:
     - uses: actions/checkout@v2
+    - name: Set up Python 3.8
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.8
+    - name: Install pylint
+      run: pip install pylint
 
   tests:
     runs-on: ubuntu-20.04
@@ -29,19 +35,15 @@ jobs:
       PASSWORD: naive
     steps:
     - uses: actions/checkout@v2
-    - name: Set up Python 3.8
-      uses: actions/setup-python@v2
-      with:
-        python-version: 3.8
     - name: Install dependencies
       run: |
         sudo apt-get update
         sudo apt-get install -y software-properties-common
-        sudo add-apt-repository ppa:pypy/ppa
+        sudo add-apt-repository ppa:pypy/ppa universe
         sudo apt-get update
-        sudo apt-get -y install python python-dev python-pip wget flex bison \
+        sudo apt-get -y install python2 python2-dev python2-pip wget flex bison \
           locales python3-software-properties python3 python3-dev python3-pip \
-          gcc g++ git libtool python-pip cmake openjdk-8-jdk fp-compiler pypy pypy3 \
+          gcc g++ git libtool cmake openjdk-8-jdk fp-compiler pypy pypy3 \
           libboost-all-dev libprotobuf-dev protobuf-compiler libnl-3-dev libnl-route-3-dev
         sudo locale-gen en_US.UTF-8
     - name: Make temporary folders
