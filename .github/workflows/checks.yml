@@ -61,8 +61,8 @@ jobs:
       run: g++ -o lib/defaultspj.bin11 lib/defaultspj.cpp -O2 -std=c++11 -lm
     - name: Install python dependencies
       run: |
-        pip3 freeze
-        pip3 install -r requirements.txt
+        sudo pip3 install -r requirements.txt
+        sudo pip3 freeze
     - name: Install nsjail
       run: |
         git submodule update --init --recursive
