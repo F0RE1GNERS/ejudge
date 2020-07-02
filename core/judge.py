@@ -26,17 +26,18 @@
     can be judged by checker later), reads program output from ouf (mapped to stdin),
     writes output to program via stdout (use cout, printf, etc).
 
-    Note that in both checker and interactor, our implementation does not support variable-length args after Result_File.
+    Note that in both checker and interactor, our implementation does not support variable-length args
+    after Result_File.
 
     Just like submissions return Sandbox.Result directly, trusted submissions return SpecialJudge.Result.
     The result contains two arguments, namely:
-    - verdict: directly defined in config.config, can be used as the final verdict
+    - verdict: directly defined in config, can be used as the final verdict
     - message: compile error message and, most importantly, result file content (first 512 bytes)
 
 """
 from os import path, listdir
 
-from config.config import Verdict, SPJ_BASE, LANGUAGE_CONFIG, LIB_BASE
+from config import Verdict, SPJ_BASE, LANGUAGE_CONFIG, LIB_BASE
 from core.submission import Submission
 
 

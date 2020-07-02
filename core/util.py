@@ -2,7 +2,7 @@ import random
 import signal
 from os import path, makedirs
 
-from config.config import TMP_BASE
+from config import TMP_BASE
 
 
 def random_string(length=32):

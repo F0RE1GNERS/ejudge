@@ -2,7 +2,7 @@ import os
 from os import pipe
 from threading import Thread
 
-from config.config import Verdict
+from config import Verdict
 from core.runner import CaseRunner
 
 
@@ -24,9 +24,6 @@ class InteractiveRunner(CaseRunner):
   def __init__(self, submission, interactor, checker, max_time, max_memory, report_file=None):
     super().__init__(submission, checker, max_time, max_memory, report_file=report_file)
     self.interactor = interactor
-
-  def initiate_case(self, case):
-    super().initiate_case(case)
 
   def run(self, case):
     self.initiate_case(case)

@@ -5,3 +5,4 @@ venv
 run
 defaultspj.bin11
 docker-compose.yml
+.vscode

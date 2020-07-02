@@ -15,10 +15,10 @@ import time
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from config.config import Verdict, SPJ_BASE
+from config import Verdict, SPJ_BASE
 from core.case import Case
 from tests.test_base import TestBase
-from config.config import SUB_BASE
+from config import SUB_BASE
 from handler import trace_group_dependencies
 
 URL_BASE = 'http://localhost:5000'

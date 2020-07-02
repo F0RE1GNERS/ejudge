@@ -22,8 +22,12 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: 3.8
+    - name: Install requirements
+      run: pip install -r requirements.txt
     - name: Install pylint
       run: pip install pylint
+    - name: Pylint
+      run: pylint --rcfile .pylintrc config core flask_server handler
 
   tests:
     runs-on: ubuntu-20.04
@@ -67,13 +71,13 @@ jobs:
         cd ..
     - name: Submission tests
       run: |
-        cd tests
         sudo ./nsjail/setup.sh
+        cd tests
         sudo python3 -m unittest test_submission
     - name: Runner tests
       run: |
-        cd tests
         sudo ./nsjail/setup.sh
+        cd tests
         sudo python3 -m unittest test_runner
     - name: Flask tests
       run: |

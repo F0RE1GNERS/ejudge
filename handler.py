@@ -2,9 +2,9 @@ import os
 import traceback
 from io import StringIO
 
-from werkzeug.contrib.cache import MemcachedCache
+from cachelib import MemcachedCache
 
-from config.config import Verdict, TRACEBACK_LIMIT, DEBUG
+from config import Verdict, TRACEBACK_LIMIT, DEBUG
 from core.case import Case
 from core.exception import CompileError
 from core.interaction import InteractiveRunner
@@ -35,7 +35,7 @@ def trace_group_dependencies(dep):
     if y not in ret:
       ret[y] = set()
     ret[y].add(x)
-  for start in ret.keys():
+  for start in ret:
     p = set()
     dfs(start, ret, p)
     ret[start] = p

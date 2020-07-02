@@ -6,7 +6,7 @@ from functools import wraps
 import yaml
 from flask import request, Response, jsonify, Flask
 
-from config.config import TOKEN_FILE, Verdict, SPJ_BASE
+from config import TOKEN_FILE, Verdict, SPJ_BASE
 from core.case import Case
 from core.judge import SpecialJudge
 from handler import judge_handler

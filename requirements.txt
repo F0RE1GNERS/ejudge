@@ -1,3 +1,4 @@
+cachelib
 psutil
 pyyaml
 gunicorn

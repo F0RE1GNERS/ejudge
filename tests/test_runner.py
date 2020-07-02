@@ -13,7 +13,7 @@ from core.interaction import InteractiveRunner
 from core.submission import Submission
 from core.judge import SpecialJudge
 from core.exception import CompileError
-from config.config import Verdict
+from config import Verdict
 from tests.test_base import TestBase
 
 

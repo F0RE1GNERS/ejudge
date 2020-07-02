@@ -1,9 +1,10 @@
 import os
-from os import path, getenv, cpu_count
-import yaml
-from pwd import getpwnam
-from grp import getgrnam
 from enum import Enum
+from grp import getgrnam
+from os import path, getenv, cpu_count
+from pwd import getpwnam
+
+import yaml
 
 _CONFIG_BASE = path.dirname(path.abspath(__file__))
 PROJECT_BASE = path.dirname(_CONFIG_BASE)

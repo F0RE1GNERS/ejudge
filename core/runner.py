@@ -5,14 +5,15 @@
     Runner returns result as a dict.
     - Only when the result is ACCEPTED or WRONG_ANSWER, will the dict contains "time"
     - The dict will contain "message" when it feels necessary
-    - When submission fails to compile, a CompileError is raised; when trusted submission fails to compile, JUDGE_ERROR is returned.
+    - When submission fails to compile, a CompileError is raised;
+      when trusted submission fails to compile, JUDGE_ERROR is returned.
 
 """
 import shutil
-from os import path, chown, makedirs
+from os import path, chown
 import base64
 
-from config.config import Verdict, USUAL_READ_SIZE, TMP_BASE, COMPILER_USER_UID, COMPILER_GROUP_GID, LIB_BASE
+from config import Verdict, USUAL_READ_SIZE, COMPILER_USER_UID, COMPILER_GROUP_GID, LIB_BASE
 from core.util import get_signal_name, random_string, make_temp_dir
 
 
@@ -91,7 +92,7 @@ class CaseRunner(object):
       # trusted checker in LIB_BASE
       # not using sandbox to accelerate
       checker_result = self.checker.run_unsafe_for_binary(
-        max_time = self.max_time,
+        max_time=self.max_time,
         working_directory=self.trusted_workspace,
         extra_arguments=[self.case.input_file, running_output, self.case.output_file, result_file]
       )

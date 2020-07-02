@@ -7,11 +7,11 @@ import sys
 import traceback
 from os import path, remove
 
-from config.config import COMPILER_GROUP_GID, COMPILER_USER_UID, RUN_GROUP_GID, RUN_USER_UID, NSJAIL_PATH, OUTPUT_LIMIT, \
+from config import COMPILER_GROUP_GID, COMPILER_USER_UID, RUN_GROUP_GID, RUN_USER_UID, NSJAIL_PATH, OUTPUT_LIMIT, \
   DEBUG
-from config.config import LANGUAGE_CONFIG, SUB_BASE, USUAL_READ_SIZE, ENV
-from config.config import Verdict
-from core.exception import *
+from config import LANGUAGE_CONFIG, SUB_BASE, USUAL_READ_SIZE, ENV
+from config import Verdict
+from core.exception import *  # pylint: disable=wildcard-import
 from core.util import random_string, make_temp_dir
 
 
@@ -108,15 +108,15 @@ class Submission(object):
     try:
       p = subprocess.run([self.exe_file] + extra_arguments,
                          stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-                         cwd=working_directory, timeout=max_time + 1)
+                         cwd=working_directory, timeout=max_time + 1, check=False)
       return Result(0, 0, p.returncode, 0, Verdict.RUNTIME_ERROR if p.returncode else Verdict.ACCEPTED)
     except subprocess.TimeoutExpired:
       return Result(0, 0, (1 << 31) - 1, 0, Verdict.TIME_LIMIT_EXCEEDED)
 
   def run(self, max_time, max_memory, working_directory: str,
-          stdin_file: str=None, stdout_file: str=None, stderr_file: str=None,
-          stdin_fd: int=None, stdout_fd: int=None, stderr_fd: int=None,
-          exe_file: str=None, trusted=False, extra_arguments: list=None, extra_files: list=None):
+          stdin_file: str = None, stdout_file: str = None, stderr_file: str = None,
+          stdin_fd: int = None, stdout_fd: int = None, stderr_fd: int = None,
+          exe_file: str = None, trusted=False, extra_arguments: list = None, extra_files: list = None):
     if extra_files is None:
       extra_files = list()
     if extra_arguments is None:
@@ -143,19 +143,20 @@ class Submission(object):
       extra_file_bindings.append("-" + mode)
       extra_file_bindings.append(k + ":/app/" + v)
     nsjail_args = [
-                    NSJAIL_PATH, "-Mo", "--chroot", root_dir, "--user", str(uid), "--group", str(gid), "--log",
-                    path.join(info_dir, "log"), "--usage", path.join(info_dir, "usage"),
-                    "-R", "/bin", "-R", "/lib", "-R", "/lib64", "-R", "/usr", "-R", "/sbin", "-R", "/dev",
-                    "-R", "/etc", "-B" if trusted else "-R", working_directory + ":/app"] + extra_file_bindings + [
-                    "-D", "/app",
-                    "--cgroup_pids_max", "64", "--cgroup_cpu_ms_per_sec", "1000",
-                    "--cgroup_mem_max", str(int((max_memory + 32) * 1024 * 1024)),
-                    "--time_limit", str(int(real_time_limit + 1)),
-                    "--rlimit_cpu", str(int(max_time + 1)),
-                    "--rlimit_as", "inf",
-                    "--rlimit_stack", str(max(int(max_memory + 32), 256)),
-                    "--rlimit_fsize", str(int(OUTPUT_LIMIT)),
-                  ]
+      NSJAIL_PATH, "-Mo", "--chroot", root_dir, "--user", str(uid), "--group", str(gid), "--log",
+      path.join(info_dir, "log"), "--usage", path.join(info_dir, "usage"),
+      "-R", "/bin", "-R", "/lib", "-R", "/lib64", "-R", "/usr", "-R", "/sbin", "-R", "/dev",
+      "-R", "/etc", "-B" if trusted else "-R", working_directory + ":/app"
+    ] + extra_file_bindings + [
+      "-D", "/app",
+      "--cgroup_pids_max", "64", "--cgroup_cpu_ms_per_sec", "1000",
+      "--cgroup_mem_max", str(int((max_memory + 32) * 1024 * 1024)),
+      "--time_limit", str(int(real_time_limit + 1)),
+      "--rlimit_cpu", str(int(max_time + 1)),
+      "--rlimit_as", "inf",
+      "--rlimit_stack", str(max(int(max_memory + 32), 256)),
+      "--rlimit_fsize", str(int(OUTPUT_LIMIT)),
+    ]
     for k, v in ENV.items():
       nsjail_args.append("-E")
       nsjail_args.append("%s=%s" % (k, v))
@@ -206,7 +207,11 @@ class Submission(object):
             tag, num = line.strip().split()
             usage[tag] = int(num)
 
-        result = Result(round(usage["user"] / 1000, 3), round(usage["memory"] / 1024, 3), usage["exit"], usage["signal"])
+        result = Result(
+          round(usage["user"] / 1000, 3),
+          round(usage["memory"] / 1024, 3),
+          usage["exit"], usage["signal"]
+        )
         if result.exit_code != 0:
           result.verdict = Verdict.RUNTIME_ERROR
         if result.memory > max_memory > 0:

@@ -1,5 +1,5 @@
 from os import path, makedirs
-from config.config import DATA_BASE
+from config import DATA_BASE
 
 
 class Case(object):
