@@ -51,10 +51,10 @@ jobs:
       run: mkdir -p run/sub run/log run/tmp
     - name: Add user compiler
       run: sudo useradd -r compiler
-    - name: Download and install testlib
-      run: |
-        wget https://raw.githubusercontent.com/MikeMirzayanov/testlib/master/testlib.h -O /usr/local/include/testlib.h
-        g++ -o lib/defaultspj.bin11 lib/defaultspj.cpp -O2 -std=c++11 -lm
+    - name: Download testlib
+      run: sudo wget https://raw.githubusercontent.com/MikeMirzayanov/testlib/master/testlib.h -O /usr/local/include/testlib.h
+    - name: Compile default SPJ
+      run: g++ -o lib/defaultspj.bin11 lib/defaultspj.cpp -O2 -std=c++11 -lm
     - name: Install python dependencies
       run: |
         pip3 install -r requirements.txt
