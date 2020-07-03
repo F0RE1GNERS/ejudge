@@ -12,7 +12,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Docker build
-      run: sudo docker build .
+      run: docker build .
 
   pylint:
     runs-on: ubuntu-18.04

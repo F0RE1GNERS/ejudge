@@ -61,6 +61,7 @@ class RunnerTest(TestBase):
     submission.compile(code, 5)
     case_runner = CaseRunner(submission, checker, 1, 128)
     result = case_runner.run(case)
+    print(result)
     self.assertEqual(result['verdict'], Verdict.ACCEPTED)
 
   def test_aplusb_defaultspj(self):
