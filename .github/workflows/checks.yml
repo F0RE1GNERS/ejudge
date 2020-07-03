@@ -52,7 +52,7 @@ jobs:
           libboost-all-dev libprotobuf-dev protobuf-compiler libnl-3-dev libnl-route-3-dev
         sudo locale-gen en_US.UTF-8
     - name: Make temporary folders
-      run: mkdir -p run/sub run/log run/tmp
+      run: mkdir -p run/sub run/log run/tmp run/spj
     - name: Add user compiler
       run: sudo useradd -r compiler
     - name: Download testlib
