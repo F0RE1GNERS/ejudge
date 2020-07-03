@@ -89,9 +89,7 @@ class CaseRunner(object):
     result = dict()
     result_file = self.make_a_file_to_write()
     with open(running_output) as f:
-      print('Running output:', running_output)
-    with open(running_result) as f:
-      print('Running result:', running_result)
+      print('Running output:', f.read())
     if self.checker.exe_file.startswith(LIB_BASE):
       # trusted checker in LIB_BASE
       # not using sandbox to accelerate
