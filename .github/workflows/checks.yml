@@ -69,11 +69,11 @@ jobs:
         cd nsjail
         make
         cd ..
-    - name: Submission tests
-      run: |
-        sudo ./nsjail/setup.sh
-        cd tests
-        sudo python3 -m unittest test_submission
+    # - name: Submission tests
+    #   run: |
+    #     sudo ./nsjail/setup.sh
+    #     cd tests
+    #     sudo python3 -m unittest test_submission
     - name: Runner tests
       run: |
         sudo ./nsjail/setup.sh
