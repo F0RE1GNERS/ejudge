@@ -99,13 +99,19 @@ class CaseRunner(object):
         extra_arguments=[self.case.input_file, running_output, self.case.output_file, result_file]
       )
     else:
+      stdout_file = self.make_a_file_to_write()
+      stderr_file = self.make_a_file_to_write()
       checker_result = self.checker.run(
-        stdin_file="/dev/null", stdout_file="/dev/null", stderr_file="/dev/null",
+        stdin_file="/dev/null", stdout_file=stdout_file, stderr_file=stderr_file,
         max_time=self.max_time, max_memory=self.max_memory, working_directory=self.trusted_workspace,
         extra_files=[(self.case.input_file, "in", "R"), (running_output, "out", "R"),
                      (self.case.output_file, "ans", "R"), (result_file, "result", "B")],
         extra_arguments=["in", "out", "ans", "result"]
       )
+      with open(stdout_file) as f:
+        print("Stdout:", f.read())
+      with open(stderr_file) as f:
+        print("Stderr:", f.read())
     result["message"] = self.checker.get_message_from_file(result_file, cleanup=True)
     result["verdict"] = self.checker.get_verdict_from_test_result(checker_result)
     if result["verdict"] == Verdict.POINT:
