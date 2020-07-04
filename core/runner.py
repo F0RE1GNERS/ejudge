@@ -115,6 +115,7 @@ class CaseRunner(object):
         result["point"] = 0.0
     result["time"] = running_result.time
     result["memory"] = running_result.memory
+    print(checker_result)
     print(result)
     return result
 
