@@ -115,6 +115,7 @@ class CaseRunner(object):
         result["point"] = 0.0
     result["time"] = running_result.time
     result["memory"] = running_result.memory
+    print(result)
     return result
 
   def write_report(self, running_output, running_stderr, running_result, final_result, checker_message,
