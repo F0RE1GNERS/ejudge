@@ -148,7 +148,7 @@ class Submission(object):
                     "-R", "/bin", "-R", "/lib", "-R", "/lib64", "-R", "/usr", "-R", "/sbin", "-R", "/dev",
                     "-R", "/etc", "-B" if trusted else "-R", working_directory + ":/app"] + extra_file_bindings + [
                     "-D", "/app",
-                    "--cgroup_pids_max", "64", "--cgroup_cpu_ms_per_sec", "1000",
+                    "--cgroup_pids_max", "1024", "--cgroup_cpu_ms_per_sec", "1000",
                     "--cgroup_mem_max", str(int((max_memory + 32) * 1024 * 1024)),
                     "--time_limit", str(int(real_time_limit + 1)),
                     "--rlimit_cpu", str(int(max_time + 1)),
